@@ -6,6 +6,6 @@
   "workers_dev": true,
   "assets": {
     "binding": "ASSETS",
-    "directory": "./"
+    "directory": "."
   }
 }
