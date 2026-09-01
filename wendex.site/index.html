@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>БУРМАЛДа))0</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Exo+2:wght@700;800;900&family=Russo+One&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --purple:#7f5dba;
+  --purple-dark:#4e3974;
+  --purple-soft:#6c4fa0;
+  --cyan:#83dce6;
+  --cyan-soft:#64c6d0;
+  --bg:#09070d;
+  --panel:#100c18;
+  --card:#15101e;
+  --card2:#1a1425;
+  --border:rgba(131,220,230,.5);
+  --border-strong:rgba(131,220,230,.85);
+  --text:#f3f8fa;
+  --muted:#a7adb8;
+  --danger:#ef6d7a;
+  --success:#7ce2bd;
+  --shadow:0 0 0 1px rgba(127,93,186,.18),0 10px 35px rgba(0,0,0,.3);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(127,93,186,.13),transparent 30%),
+    linear-gradient(180deg,#09070d 0%,#0b0810 100%);
+  color:var(--text);
+}
+
+body{
+  font-family:"Cairo",sans-serif;
+  padding:24px;
+}
+
+button,
+input{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.page{
+  width:min(1800px,100%);
+  margin:0 auto;
+}
+
+.topbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:18px;
+}
+
+.brand-wrap{
+  padding-left:58px;
+}
+
+.brand{
+  margin:0;
+  font-family:"Russo One",sans-serif;
+  font-size:clamp(32px,4vw,52px);
+  line-height:1;
+  color:var(--cyan);
+  text-shadow:
+    0 0 8px rgba(131,220,230,.35),
+    0 0 28px rgba(131,220,230,.12);
+}
+
+.subtitle{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:15px;
+  font-weight:800;
+}
+
+.top-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.top-button{
+  min-height:46px;
+  padding:0 16px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  color:var(--cyan);
+  background:linear-gradient(180deg,#171021,#120d19);
+  box-shadow:var(--shadow);
+  font-weight:900;
+  transition:.15s ease;
+}
+
+.top-button:hover{
+  border-color:var(--border-strong);
+  transform:translateY(-1px);
+}
+
+.top-button.ai{
+  background:linear-gradient(180deg,#6e51a3,#4f3977);
+  color:white;
+  border-color:rgba(131,220,230,.65);
+}
+
+.search-row{
+  display:flex;
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.search-wrap{
+  position:relative;
+  flex:1;
+}
+
+.search{
+  width:100%;
+  height:50px;
+  padding:0 16px 0 46px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  outline:none;
+  background:#0f0b15;
+  color:var(--text);
+  font-size:16px;
+  font-weight:800;
+}
+
+.search:focus{
+  border-color:var(--border-strong);
+  box-shadow:0 0 0 3px rgba(131,220,230,.08);
+}
+
+.search-icon{
+  position:absolute;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--cyan);
+  font-size:20px;
+  pointer-events:none;
+}
+
+.status{
+  padding:9px 12px;
+  border:1px solid rgba(131,220,230,.15);
+  border-radius:10px;
+  background:rgba(20,14,29,.7);
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.columns{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(410px,1fr));
+  gap:16px;
+  align-items:start;
+}
+
+.seller{
+  min-width:0;
+  background:linear-gradient(180deg,#130d1b,#0d0912);
+  border:1px solid rgba(131,220,230,.28);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+
+.seller-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:14px 16px;
+  background:linear-gradient(180deg,rgba(127,93,186,.22),rgba(127,93,186,.08));
+  border-bottom:1px solid rgba(131,220,230,.2);
+}
+
+.seller-name{
+  color:var(--cyan);
+  font-family:"Russo One",sans-serif;
+  font-size:20px;
+  text-shadow:0 0 10px rgba(131,220,230,.16);
+}
+
+.sold-button{
+  min-height:38px;
+  padding:0 14px;
+  border-radius:10px;
+  border:1px solid rgba(131,220,230,.65);
+  background:linear-gradient(180deg,#7f5dba,#62478e);
+  color:white;
+  font-size:14px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.sold-button.saved{
+  background:linear-gradient(180deg,#397d69,#2b5e50);
+  border-color:rgba(124,226,189,.65);
+}
+
+.seller-body{
+  padding:10px;
+}
+
+.product-card{
+  display:grid;
+  grid-template-columns:60px minmax(180px,1fr) 74px 105px;
+  gap:9px;
+  align-items:center;
+  min-width:0;
+  margin:7px 0;
+  padding:10px;
+  border:1px solid rgba(131,220,230,.12);
+  border-radius:13px;
+  background:linear-gradient(180deg,#17111f,#120d18);
+  transition:.15s ease;
+}
+
+.product-card:hover{
+  border-color:rgba(131,220,230,.28);
+}
+
+.product-card.has-quantity{
+  border-color:rgba(127,93,186,.75);
+  box-shadow:
+    0 0 0 1px rgba(127,93,186,.08),
+    0 0 22px rgba(127,93,186,.07);
+}
+
+.product-icon-wrap{
+  width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(131,220,230,.18);
+  border-radius:11px;
+  background:#0d0a12;
+  overflow:hidden;
+  flex:none;
+}
+
+.product-icon{
+  width:42px;
+  height:42px;
+  object-fit:contain;
+  display:block;
+}
+
+.product-info{
+  min-width:0;
+  overflow:visible;
+}
+
+.product-name{
+  color:#eefbfc;
+  font-family:"Exo 2",sans-serif;
+  font-size:16px;
+  font-weight:900;
+  line-height:1.1;
+  overflow-wrap:anywhere;
+}
+
+.product-price{
+  margin-top:5px;
+  margin-left:10px;
+  color:var(--cyan);
+  font-family:"Cairo",sans-serif;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.quantity-area{
+  width:74px;
+  min-width:74px;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+}
+
+.quantity-input{
+  width:44px;
+  min-width:44px;
+  max-width:none;
+  padding:7px 4px;
+  border:1px solid rgba(131,220,230,.4);
+  border-radius:9px;
+  background:#0d0912;
+  color:var(--cyan);
+  text-align:center;
+  outline:none;
+  font-weight:900;
+  font-size:15px;
+  flex:0 0 auto;
+}
+
+.quantity-input:focus{
+  border-color:var(--border-strong);
+  box-shadow:0 0 0 3px rgba(131,220,230,.08);
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  appearance:none;
+  margin:0;
+}
+
+.quantity-input{
+  -moz-appearance:textfield;
+  appearance:textfield;
+}
+
+.sum-area{
+  width:105px;
+  min-width:105px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+}
+
+.sum{
+  width:84px;
+  min-width:84px;
+  color:#d9bdff;
+  font-family:"Cairo",sans-serif;
+  font-size:14px;
+  font-weight:900;
+  text-align:center;
+  white-space:nowrap;
+  overflow:visible;
+}
+
+.seller-total{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:10px;
+  padding:13px 14px;
+  border-top:1px solid rgba(131,220,230,.15);
+  background:rgba(127,93,186,.08);
+}
+
+.seller-total-label{
+  color:var(--muted);
+  font-size:14px;
+  font-weight:900;
+}
+
+.seller-total-value{
+  color:var(--cyan);
+  font-size:19px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.empty{
+  padding:22px 10px;
+  color:var(--muted);
+  text-align:center;
+  font-weight:800;
+}
+
+.bottom-total{
+  position:sticky;
+  bottom:14px;
+  z-index:20;
+  margin-top:18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 18px;
+  border:1px solid rgba(131,220,230,.35);
+  border-radius:16px;
+  background:linear-gradient(180deg,rgba(44,27,68,.95),rgba(23,14,35,.96));
+  box-shadow:0 18px 45px rgba(0,0,0,.35);
+  backdrop-filter:blur(10px);
+}
+
+.bottom-total-label{
+  color:white;
+  font-family:"Russo One",sans-serif;
+  font-size:18px;
+}
+
+.bottom-total-value{
+  color:var(--cyan);
+  font-size:25px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.clear-button{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:40;
+  min-height:46px;
+  padding:0 16px;
+  border:1px solid rgba(131,220,230,.55);
+  border-radius:12px;
+  background:linear-gradient(180deg,#211431,#150d1e);
+  color:var(--cyan);
+  box-shadow:0 12px 35px rgba(0,0,0,.45);
+  font-weight:900;
+}
+
+.clear-button:hover{
+  border-color:var(--border-strong);
+}
+
+.menu-button{
+  position:fixed;
+  left:14px;
+  top:14px;
+  z-index:70;
+  width:46px;
+  height:46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(131,220,230,.52);
+  border-radius:12px;
+  background:linear-gradient(180deg,#1c1229,#110a18);
+  color:var(--cyan);
+  box-shadow:0 12px 35px rgba(0,0,0,.35);
+  font-size:22px;
+}
+
+.menu-button.hidden{
+  display:none;
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  display:none;
+  background:rgba(0,0,0,.68);
+  backdrop-filter:blur(5px);
+}
+
+.overlay.open{
+  display:block;
+}
+
+.side-panel{
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:min(520px,92vw);
+  padding:22px;
+  background:linear-gradient(180deg,#100a16,#0c0811);
+  border-right:1px solid rgba(131,220,230,.2);
+  overflow:auto;
+}
+
+.panel-title{
+  margin:0;
+  color:var(--cyan);
+  font-family:"Russo One",sans-serif;
+  font-size:24px;
+}
+
+.panel-subtitle{
+  margin:8px 0 18px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.close-panel{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:40px;
+  height:40px;
+  border:1px solid rgba(131,220,230,.35);
+  border-radius:10px;
+  background:#130d1b;
+  color:var(--cyan);
+  font-size:20px;
+}
+
+.history-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.history-item{
+  border:1px solid rgba(131,220,230,.18);
+  border-radius:14px;
+  padding:13px;
+  background:#130d1b;
+}
+
+.history-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.history-seller{
+  color:var(--cyan);
+  font-weight:900;
+}
+
+.history-date{
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap;
+}
+
+.history-total{
+  margin-top:6px;
+  color:white;
+  font-size:18px;
+  font-weight:900;
+}
+
+.history-products{
+  margin-top:8px;
+  color:#c7ced5;
+  font-size:12px;
+  line-height:1.6;
+}
+
+.history-actions{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.history-actions button{
+  min-height:36px;
+  padding:0 11px;
+  border-radius:9px;
+  border:1px solid rgba(131,220,230,.25);
+  background:#18101f;
+  color:var(--cyan);
+  font-weight:900;
+}
+
+.history-actions .delete{
+  color:#ff9eaa;
+  border-color:rgba(239,109,122,.3);
+}
+
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:80;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(7px);
+}
+
+.modal-backdrop.open{
+  display:flex;
+}
+
+.ai-modal{
+  width:min(820px,100%);
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+  border:1px solid rgba(131,220,230,.34);
+  border-radius:18px;
+  background:linear-gradient(180deg,#130d1b,#0c0811);
+  box-shadow:0 25px 70px rgba(0,0,0,.55);
+}
+
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 18px;
+  border-bottom:1px solid rgba(131,220,230,.16);
+}
+
+.modal-title{
+  margin:0;
+  color:var(--cyan);
+  font-family:"Russo One",sans-serif;
+  font-size:22px;
+}
+
+.close-modal{
+  width:40px;
+  height:40px;
+  border:1px solid rgba(131,220,230,.3);
+  border-radius:10px;
+  background:#160e1e;
+  color:var(--cyan);
+  font-size:20px;
+}
+
+.ai-body{
+  padding:18px;
+}
+
+.paste-zone{
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:18px;
+  border:1.5px dashed rgba(131,220,230,.38);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(127,93,186,.12),transparent 45%),
+    #0f0a15;
+  text-align:center;
+  outline:none;
+}
+
+.paste-zone.focused{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px rgba(131,220,230,.08);
+}
+
+.paste-main{
+  color:white;
+  font-size:19px;
+  font-weight:900;
+}
+
+.paste-hint{
+  color:var(--muted);
+  font-size:13px;
+  max-width:550px;
+}
+
+.ai-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-top:14px;
+}
+
+.ai-action{
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid rgba(131,220,230,.34);
+  border-radius:10px;
+  background:#181020;
+  color:var(--cyan);
+  font-weight:900;
+}
+
+.ai-action.primary{
+  background:linear-gradient(180deg,#7f5dba,#60458b);
+  color:white;
+  border-color:rgba(131,220,230,.55);
+}
+
+.ai-action:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.file-label{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid rgba(131,220,230,.34);
+  border-radius:10px;
+  background:#181020;
+  color:var(--cyan);
+  font-weight:900;
+  cursor:pointer;
+}
+
+#imageFile{
+  display:none;
+}
+
+.image-preview{
+  display:none;
+  margin-top:16px;
+  padding:10px;
+  border:1px solid rgba(131,220,230,.2);
+  border-radius:14px;
+  background:#0c0811;
+}
+
+.image-preview.open{
+  display:block;
+}
+
+.image-preview img{
+  display:block;
+  width:100%;
+  max-height:390px;
+  object-fit:contain;
+  border-radius:10px;
+  background:#06050a;
+}
+
+.preview-caption{
+  margin-top:8px;
+  color:var(--muted);
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+}
+
+.ai-status{
+  margin-top:14px;
+  min-height:22px;
+  color:var(--muted);
+  text-align:center;
+  font-size:13px;
+  font-weight:900;
+}
+
+.recognition-result{
+  display:none;
+  margin-top:16px;
+}
+
+.recognition-result.open{
+  display:block;
+}
+
+.result-title{
+  color:white;
+  font-size:17px;
+  font-weight:900;
+  margin-bottom:10px;
+}
+
+.recognition-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.recognition-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 90px 95px;
+  gap:8px;
+  align-items:center;
+  padding:10px 12px;
+  border:1px solid rgba(131,220,230,.15);
+  border-radius:11px;
+  background:#140e1c;
+}
+
+.recognition-name{
+  color:var(--cyan);
+  font-family:"Exo 2",sans-serif;
+  font-weight:900;
+  overflow-wrap:anywhere;
+}
+
+.recognition-qty,
+.recognition-confidence{
+  text-align:center;
+  color:white;
+  font-weight:900;
+}
+
+.recognition-confidence{
+  color:#d7c1fa;
+}
+
+.result-summary{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(127,93,186,.35);
+  border-radius:11px;
+  background:rgba(127,93,186,.08);
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.modal-footer{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+
+.footer-button{
+  min-height:42px;
+  padding:0 15px;
+  border:1px solid rgba(131,220,230,.34);
+  border-radius:10px;
+  background:#17101f;
+  color:var(--cyan);
+  font-weight:900;
+}
+
+.footer-button.apply{
+  background:linear-gradient(180deg,#7f5dba,#60458b);
+  color:white;
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  z-index:120;
+  transform:translateX(-50%) translateY(12px);
+  opacity:0;
+  pointer-events:none;
+  padding:11px 16px;
+  border:1px solid rgba(131,220,230,.38);
+  border-radius:11px;
+  background:#140d1d;
+  color:var(--cyan);
+  font-weight:900;
+  transition:.2s ease;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+@media(max-width:1150px){
+  .columns{
+    grid-template-columns:1fr;
+  }
+
+  .product-card{
+    grid-template-columns:60px minmax(180px,1fr) 74px 105px;
+  }
+}
+
+@media(max-width:650px){
+  body{
+    padding:14px;
+  }
+
+  .brand-wrap{
+    padding-left:52px;
+  }
+
+  .topbar{
+    align-items:flex-start;
+  }
+
+  .top-actions{
+    width:100%;
+  }
+
+  .top-button{
+    flex:1 1 180px;
+  }
+
+  .product-card{
+    grid-template-columns:54px minmax(150px,1fr) 64px 92px;
+    padding:9px;
+  }
+
+  .product-icon-wrap{
+    width:46px;
+    height:46px;
+  }
+
+  .product-icon{
+    width:38px;
+    height:38px;
+  }
+
+  .quantity-area{
+    width:64px;
+    min-width:64px;
+  }
+
+  .sum-area{
+    width:92px;
+    min-width:92px;
+  }
+
+  .sum{
+    width:76px;
+    min-width:76px;
+    font-size:13px;
+  }
+
+  .recognition-row{
+    grid-template-columns:minmax(0,1fr) 66px 78px;
+  }
+
+  .bottom-total{
+    bottom:10px;
+  }
+
+  .clear-button{
+    position:static;
+    display:block;
+    width:100%;
+    margin-top:10px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<button id="menuButton" class="menu-button" type="button" aria-label="Открыть меню">☰</button>
+
+<div class="page">
+
+  <div class="topbar">
+    <div class="brand-wrap">
+      <h1 class="brand">БУРМАЛДа))0</h1>
+      <div class="subtitle">Калькулятор товаров</div>
+    </div>
+
+    <div class="top-actions">
+      <button id="aiButton" class="top-button ai" type="button">🤖 Распознать скриншот</button>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <div class="search-wrap">
+      <div class="search-icon">⌕</div>
+      <input
+        id="search"
+        class="search"
+        type="text"
+        placeholder="Поиск товара..."
+        autocomplete="off"
+      >
+    </div>
+  </div>
+
+  <div id="status" class="status">Загружаю цены из Google Sheets...</div>
+
+  <div id="columns" class="columns"></div>
+
+  <div class="bottom-total">
+    <div class="bottom-total-label">Общая сумма</div>
+    <div id="globalTotal" class="bottom-total-value">0 ₽</div>
+  </div>
+
+  <button id="clearButton" class="clear-button" type="button">🧹 Очистить все ячейки</button>
+</div>
+
+<!-- HISTORY MENU -->
+<div id="overlay" class="overlay">
+  <aside class="side-panel">
+    <button id="closePanel" class="close-panel" type="button">×</button>
+
+    <h2 class="panel-title">История продаж</h2>
+    <div class="panel-subtitle">
+      Сохранённые операции. Очистка ячеек историю не удаляет.
+    </div>
+
+    <div id="historyList" class="history-list"></div>
+  </aside>
+</div>
+
+<!-- AI MODAL -->
+<div id="aiModal" class="modal-backdrop">
+  <div class="ai-modal">
+
+    <div class="modal-header">
+      <h2 class="modal-title">🤖 Распознавание скриншота</h2>
+      <button id="closeAiModal" class="close-modal" type="button">×</button>
+    </div>
+
+    <div class="ai-body">
+
+      <div id="pasteZone" class="paste-zone" tabindex="0">
+        <div class="paste-main">📋 Вставь скриншот сюда</div>
+        <div class="paste-hint">
+          Нажми <b>Ctrl + V</b>, и изображение из буфера обмена будет загружено автоматически.
+          Также можно выбрать файл.
+        </div>
+
+        <div class="ai-actions">
+          <button id="pasteButton" class="ai-action primary" type="button">
+            📋 Вставить из буфера
+          </button>
+
+          <label class="file-label" for="imageFile">
+            📁 Выбрать файл
+          </label>
+
+          <input id="imageFile" type="file" accept="image/*">
+        </div>
+      </div>
+
+      <div id="imagePreview" class="image-preview">
+        <img id="previewImage" alt="Предпросмотр скриншота">
+        <div id="previewCaption" class="preview-caption">Изображение готово</div>
+      </div>
+
+      <div id="aiStatus" class="ai-status"></div>
+
+      <div id="recognitionResult" class="recognition-result">
+        <div class="result-title">Распознано:</div>
+
+        <div id="recognitionList" class="recognition-list"></div>
+
+        <div id="resultSummary" class="result-summary"></div>
+
+        <div class="modal-footer">
+          <button id="retryRecognition" class="footer-button" type="button">
+            🔄 Распознать заново
+          </button>
+
+          <button id="applyRecognition" class="footer-button apply" type="button">
+            ✓ Применить
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8w3Uu6FZ6PFxGP0ZwxPimjVLURIh0pBrYlrdJEP23sUNJU6IRkvBcHHvPTXf3f8bsnO6DLZN3EjEr/pub?output=csv";
+
+const SELLERS = {
+  Logovo: {
+    name: "Логово Хайзенберга",
+    column: 0
+  },
+  Staraptor: {
+    name: "Staraptor",
+    column: 4
+  },
+  WhiteFox: {
+    name: "WhiteFox",
+    column: 8
+  }
+};
+
+const ICONS = {
+  "Кофе": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/prl2.png",
+  "Помидор": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/6rpy.png",
+  "Молоко": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/kl9v.png",
+  "Гипс": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/kl70.png",
+  "Железо": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/jl77.png",
+  "Реагенты": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/y7po.png",
+  "Аммиак": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/40vn.png",
+  "Остатки приборов шепота": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/55olq.png",
+  "Отличная тушенка": "https://cdn3.stalzone.wiki/exbo_item_parser/consumables/food/j5456.png",
+
+  "Газовый баллон": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/03p1.png",
+  "Перчатки": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/wopo.png",
+  "Чеснок": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/7rp7.png",
+  "Поташ": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/np0w.png",
+
+  "Мясо шавки": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/dq0n.png",
+  "Мясо кабана": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/2d76.png",
+  "Мясо хрюши": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/vrpd.png"
+};
+
+const SELLER_ITEMS = {
+  Logovo: [
+    "Кофе",
+    "Помидор",
+    "Молоко",
+    "Гипс",
+    "Железо",
+    "Реагенты",
+    "Аммиак",
+    "Остатки приборов шепота",
+    "Отличная тушенка"
+  ],
+  Staraptor: [
+    "Газовый баллон",
+    "Перчатки",
+    "Чеснок",
+    "Поташ"
+  ],
+  WhiteFox: [
+    "Мясо шавки",
+    "Мясо кабана",
+    "Мясо хрюши"
+  ]
+};
+
+const ALLOWED_AI_ITEMS = [
+  "Кофе",
+  "Помидор",
+  "Молоко",
+  "Гипс",
+  "Железо",
+  "Реагенты",
+  "Аммиак",
+  "Остатки приборов шепота",
+  "Отличная тушенка",
+  "Газовый баллон",
+  "Перчатки",
+  "Чеснок",
+  "Поташ",
+  "Мясо шавки",
+  "Мясо кабана",
+  "Мясо хрюши"
+];
+
+const STORAGE_QUANTITIES = "burmalda_quantities_v3";
+const STORAGE_HISTORY = "burmalda_history_v3";
+
+let prices = {};
+let quantities = loadQuantities();
+let history = loadHistory();
+
+let currentImageDataUrl = "";
+let currentRecognition = [];
+
+function normalizeName(name) {
+  let result = String(name || "")
+    .replace(/^\uFEFF/, "")
+    .trim();
+
+  result = result.replace(/^\s*\d+(?:[.,]\d+)?\s+/, "");
+  result = result.replace(/^Коффе$/i, "Кофе");
+
+  return result;
+}
+
+function toNumber(value) {
+  const cleaned = String(value ?? "")
+    .replace(/[\s\u00A0]/g, "")
+    .replace(",", ".");
+
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatMoney(value) {
+  return Math.round(Number(value) || 0).toLocaleString("ru-RU") + " ₽";
+}
+
+function loadQuantities() {
+  try {
+    const raw = localStorage.getItem(STORAGE_QUANTITIES);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveQuantities() {
+  localStorage.setItem(
+    STORAGE_QUANTITIES,
+    JSON.stringify(quantities)
+  );
+}
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_HISTORY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory() {
+  localStorage.setItem(
+    STORAGE_HISTORY,
+    JSON.stringify(history)
+  );
+}
+
+function makeQuantityKey(sellerId, productName) {
+  return sellerId + "::" + productName;
+}
+
+function getQuantity(sellerId, productName) {
+  const key = makeQuantityKey(sellerId, productName);
+  const n = Number(quantities[key]);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+}
+
+function setQuantity(sellerId, productName, value) {
+  const key = makeQuantityKey(sellerId, productName);
+  const n = Math.max(0, Math.floor(Number(value) || 0));
+
+  quantities[key] = n;
+  saveQuantities();
+}
+
+function resizeQuantityInput(input) {
+  const value = String(input.value || "0");
+  const width = Math.max(44, value.length * 14 + 16);
+  input.style.width = width + "px";
+}
+
+function resizeSum(sumElement, value) {
+  const text = formatMoney(value);
+  const width = Math.max(84, Math.min(140, text.length * 9 + 16));
+  sumElement.style.width = width + "px";
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const n = text[i + 1];
+
+    if (c === '"' && quote && n === '"') {
+      cell += '"';
+      i++;
+      continue;
+    }
+
+    if (c === '"') {
+      quote = !quote;
+      continue;
+    }
+
+    if (c === "," && !quote) {
+      row.push(cell.trim());
+      cell = "";
+      continue;
+    }
+
+    if ((c === "\n" || c === "\r") && !quote) {
+      if (c === "\r" && n === "\n") {
+        i++;
+      }
+
+      row.push(cell.trim());
+      cell = "";
+
+      if (row.some(v => v !== "")) {
+        rows.push(row);
+      }
+
+      row = [];
+      continue;
+    }
+
+    cell += c;
+  }
+
+  if (cell !== "" || row.length) {
+    row.push(cell.trim());
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function parseSellerProducts(rows, nameColumn, priceColumn) {
+  const result = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i] || [];
+
+    const rawName = row[nameColumn] || "";
+    const rawPrice = row[priceColumn] || "";
+
+    const name = normalizeName(rawName);
+
+    if (!name) continue;
+
+    // Исключаем технические и числовые строки
+    if (/^\d+(?:[.,]\d+)?$/.test(name)) continue;
+
+    const price = toNumber(rawPrice);
+
+    result.push({
+      name,
+      price
+    });
+  }
+
+  return result;
+}
+
+async function loadPrices() {
+  const status = document.getElementById("status");
+
+  try {
+    status.textContent = "Загружаю цены из Google Sheets...";
+
+    const response = await fetch(API_URL, {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const csv = await response.text();
+    const rows = parseCSV(csv);
+
+    prices = {};
+
+    const sellerConfigs = [
+      {
+        id: "Logovo",
+        nameColumn: 0,
+        priceColumn: 1
+      },
+      {
+        id: "Staraptor",
+        nameColumn: 4,
+        priceColumn: 5
+      },
+      {
+        id: "WhiteFox",
+        nameColumn: 8,
+        priceColumn: 9
+      }
+    ];
+
+    for (const config of sellerConfigs) {
+      const sellerProducts = parseSellerProducts(
+        rows,
+        config.nameColumn,
+        config.priceColumn
+      );
+
+      for (const product of sellerProducts) {
+        prices[makeQuantityKey(config.id, product.name)] = product.price;
+      }
+    }
+
+    // У WhiteFox названия "Мясо" из таблицы различаются неинформативно,
+    // поэтому используем гарантированные цены из актуального списка.
+    prices[makeQuantityKey("WhiteFox", "Мясо шавки")] = 3000;
+    prices[makeQuantityKey("WhiteFox", "Мясо кабана")] = 3000;
+    prices[makeQuantityKey("WhiteFox", "Мясо хрюши")] = 3000;
+
+    // Нормализация известных товаров из таблицы
+    prices[makeQuantityKey("Logovo", "Кофе")] =
+      prices[makeQuantityKey("Logovo", "Коффе")] ??
+      prices[makeQuantityKey("Logovo", "Кофе")] ??
+      700;
+
+    renderAll();
+
+    status.textContent = "Цены загружены";
+  } catch (error) {
+    console.error(error);
+
+    // Резервные цены, чтобы интерфейс не ломался
+    prices = {
+      [makeQuantityKey("Logovo","Кофе")]:700,
+      [makeQuantityKey("Logovo","Помидор")]:1600,
+      [makeQuantityKey("Logovo","Молоко")]:70,
+      [makeQuantityKey("Logovo","Гипс")]:100,
+      [makeQuantityKey("Logovo","Железо")]:590,
+      [makeQuantityKey("Logovo","Реагенты")]:600,
+      [makeQuantityKey("Logovo","Аммиак")]:12700,
+      [makeQuantityKey("Logovo","Остатки приборов шепота")]:24500,
+      [makeQuantityKey("Logovo","Отличная тушенка")]:1100,
+
+      [makeQuantityKey("Staraptor","Газовый баллон")]:5730,
+      [makeQuantityKey("Staraptor","Перчатки")]:500,
+      [makeQuantityKey("Staraptor","Чеснок")]:500,
+      [makeQuantityKey("Staraptor","Поташ")]:500,
+
+      [makeQuantityKey("WhiteFox","Мясо шавки")]:3000,
+      [makeQuantityKey("WhiteFox","Мясо кабана")]:3000,
+      [makeQuantityKey("WhiteFox","Мясо хрюши")]:3000
+    };
+
+    renderAll();
+
+    status.textContent =
+      "Не удалось обновить цены. Используются сохранённые резервные цены.";
+  }
+}
+
+function getPrice(sellerId, productName) {
+  return Number(
+    prices[makeQuantityKey(sellerId, productName)] ?? 0
+  );
+}
+
+function getProductSum(sellerId, productName) {
+  return getQuantity(sellerId, productName) *
+    getPrice(sellerId, productName);
+}
+
+function calculateSellerTotal(sellerId) {
+  return SELLER_ITEMS[sellerId].reduce(
+    (sum, productName) =>
+      sum + getProductSum(sellerId, productName),
+    0
+  );
+}
+
+function calculateGlobalTotal() {
+  return Object.keys(SELLER_ITEMS).reduce(
+    (total, sellerId) =>
+      total + calculateSellerTotal(sellerId),
+    0
+  );
+}
+
+function matchesSearch(name) {
+  const q = document
+    .getElementById("search")
+    .value
+    .trim()
+    .toLowerCase();
+
+  return !q || name.toLowerCase().includes(q);
+}
+
+function renderAll() {
+  const container = document.getElementById("columns");
+  container.innerHTML = "";
+
+  for (const sellerId of ["Logovo", "Staraptor", "WhiteFox"]) {
+    container.appendChild(renderSeller(sellerId));
+  }
+
+  updateGlobalTotal();
+}
+
+function renderSeller(sellerId) {
+  const seller = document.createElement("section");
+  seller.className = "seller";
+
+  const header = document.createElement("div");
+  header.className = "seller-header";
+
+  const title = document.createElement("div");
+  title.className = "seller-name";
+  title.textContent = SELLERS[sellerId].name;
+
+  const soldButton = document.createElement("button");
+  soldButton.type = "button";
+  soldButton.className = "sold-button";
+  soldButton.textContent = "Продал";
+
+  soldButton.addEventListener("click", () => {
+    saveSale(sellerId, soldButton);
+  });
+
+  header.appendChild(title);
+  header.appendChild(soldButton);
+
+  const body = document.createElement("div");
+  body.className = "seller-body";
+
+  const visibleProducts = SELLER_ITEMS[sellerId].filter(matchesSearch);
+
+  if (!visibleProducts.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Ничего не найдено";
+    body.appendChild(empty);
+  } else {
+    for (const productName of visibleProducts) {
+      body.appendChild(
+        renderProductCard(sellerId, productName)
+      );
+    }
+  }
+
+  const totalBox = document.createElement("div");
+  totalBox.className = "seller-total";
+
+  const totalLabel = document.createElement("div");
+  totalLabel.className = "seller-total-label";
+  totalLabel.textContent = "Итого";
+
+  const totalValue = document.createElement("div");
+  totalValue.className = "seller-total-value";
+  totalValue.textContent = formatMoney(
+    calculateSellerTotal(sellerId)
+  );
+
+  totalBox.appendChild(totalLabel);
+  totalBox.appendChild(totalValue);
+
+  body.appendChild(totalBox);
+
+  seller.appendChild(header);
+  seller.appendChild(body);
+
+  return seller;
+}
+
+function renderProductCard(sellerId, productName) {
+  const card = document.createElement("div");
+  card.className = "product-card";
+
+  const quantity = getQuantity(sellerId, productName);
+  if (quantity > 0) {
+    card.classList.add("has-quantity");
+  }
+
+  const iconWrap = document.createElement("div");
+  iconWrap.className = "product-icon-wrap";
+
+  const icon = document.createElement("img");
+  icon.className = "product-icon";
+  icon.alt = productName;
+  icon.src = ICONS[productName] || "";
+  icon.loading = "lazy";
+
+  iconWrap.appendChild(icon);
+
+  const info = document.createElement("div");
+  info.className = "product-info";
+
+  const name = document.createElement("div");
+  name.className = "product-name";
+  name.textContent = productName;
+
+  const price = document.createElement("div");
+  price.className = "product-price";
+  price.textContent =
+    "цена: " + formatMoney(getPrice(sellerId, productName)) + " / шт";
+
+  info.appendChild(name);
+  info.appendChild(price);
+
+  const quantityArea = document.createElement("div");
+  quantityArea.className = "quantity-area";
+
+  const input = document.createElement("input");
+  input.className = "quantity-input";
+  input.type = "number";
+  input.min = "0";
+  input.step = "1";
+  input.value = String(quantity);
+  input.inputMode = "numeric";
+  input.setAttribute(
+    "aria-label",
+    "Количество: " + productName
+  );
+
+  resizeQuantityInput(input);
+
+  const updateFromInput = () => {
+    let value = Number(input.value);
+
+    if (!Number.isFinite(value) || value < 0) {
+      value = 0;
+    }
+
+    value = Math.floor(value);
+
+    input.value = String(value);
+
+    setQuantity(sellerId, productName, value);
+
+    resizeQuantityInput(input);
+
+    updateProductVisual(card, sum, sellerId, productName);
+    updateSellerAndGlobalTotals();
+  };
+
+  input.addEventListener("input", updateFromInput);
+
+  input.addEventListener("change", updateFromInput);
+
+  quantityArea.appendChild(input);
+
+  const sumArea = document.createElement("div");
+  sumArea.className = "sum-area";
+
+  const sum = document.createElement("div");
+  sum.className = "sum";
+
+  const productSum = getProductSum(
+    sellerId,
+    productName
+  );
+
+  sum.textContent = formatMoney(productSum);
+  resizeSum(sum, productSum);
+
+  sumArea.appendChild(sum);
+
+  card.appendChild(iconWrap);
+  card.appendChild(info);
+  card.appendChild(quantityArea);
+  card.appendChild(sumArea);
+
+  return card;
+}
+
+function updateProductVisual(card, sum, sellerId, productName) {
+  const quantity = getQuantity(sellerId, productName);
+  const value = getProductSum(sellerId, productName);
+
+  card.classList.toggle(
+    "has-quantity",
+    quantity > 0
+  );
+
+  sum.textContent = formatMoney(value);
+  resizeSum(sum, value);
+}
+
+function updateSellerAndGlobalTotals() {
+  const search = document.getElementById("search");
+  const oldValue = search.value;
+
+  renderAll();
+
+  search.value = oldValue;
+  updateGlobalTotal();
+}
+
+function updateGlobalTotal() {
+  document.getElementById("globalTotal").textContent =
+    formatMoney(calculateGlobalTotal());
+}
+
+function saveSale(sellerId, button) {
+  const items = [];
+
+  for (const productName of SELLER_ITEMS[sellerId]) {
+    const quantity = getQuantity(
+      sellerId,
+      productName
+    );
+
+    if (quantity > 0) {
+      items.push({
+        name: productName,
+        quantity,
+        price: getPrice(sellerId, productName),
+        sum: quantity * getPrice(sellerId, productName)
+      });
+    }
+  }
+
+  const total = items.reduce(
+    (sum, item) => sum + item.sum,
+    0
+  );
+
+  const entry = {
+    id:
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 8),
+    sellerId,
+    sellerName: SELLERS[sellerId].name,
+    date: new Date().toISOString(),
+    total,
+    items
+  };
+
+  history.unshift(entry);
+
+  if (history.length > 200) {
+    history = history.slice(0, 200);
+  }
+
+  saveHistory();
+  renderHistory();
+
+  button.classList.add("saved");
+  button.textContent = "✓ Сохранено";
+
+  setTimeout(() => {
+    button.classList.remove("saved");
+    button.textContent = "Продал";
+  }, 1200);
+}
+
+function renderHistory() {
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+
+  if (!history.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "История пока пуста";
+    list.appendChild(empty);
+    return;
+  }
+
+  for (const entry of history) {
+    const item = document.createElement("div");
+    item.className = "history-item";
+
+    const top = document.createElement("div");
+    top.className = "history-top";
+
+    const seller = document.createElement("div");
+    seller.className = "history-seller";
+    seller.textContent = entry.sellerName;
+
+    const date = document.createElement("div");
+    date.className = "history-date";
+
+    const dateObject = new Date(entry.date);
+
+    date.textContent =
+      dateObject.toLocaleDateString("ru-RU") +
+      " " +
+      dateObject.toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+    top.appendChild(seller);
+    top.appendChild(date);
+
+    const total = document.createElement("div");
+    total.className = "history-total";
+    total.textContent = formatMoney(entry.total);
+
+    const productsBox = document.createElement("div");
+    productsBox.className = "history-products";
+
+    if (entry.items?.length) {
+      productsBox.textContent = entry.items
+        .map(
+          item =>
+            item.name +
+            " × " +
+            item.quantity
+        )
+        .join(" • ");
+    } else {
+      productsBox.textContent = "Продано с нулевым количеством";
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "history-actions";
+
+    const restoreButton = document.createElement("button");
+    restoreButton.type = "button";
+    restoreButton.textContent = "↩ Восстановить";
+
+    restoreButton.addEventListener("click", () => {
+      restoreSale(entry);
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete";
+    deleteButton.textContent = "🗑 Удалить";
+
+    deleteButton.addEventListener("click", () => {
+      deleteHistoryEntry(entry.id);
+    });
+
+    actions.appendChild(restoreButton);
+    actions.appendChild(deleteButton);
+
+    item.appendChild(top);
+    item.appendChild(total);
+    item.appendChild(productsBox);
+    item.appendChild(actions);
+
+    list.appendChild(item);
+  }
+}
+
+function restoreSale(entry) {
+  if (!entry.items) return;
+
+  for (const item of entry.items) {
+    const key = makeQuantityKey(
+      entry.sellerId,
+      item.name
+    );
+
+    quantities[key] = Math.max(
+      0,
+      Math.floor(Number(item.quantity) || 0)
+    );
+  }
+
+  saveQuantities();
+  renderAll();
+
+  showToast("Продажа восстановлена");
+}
+
+function deleteHistoryEntry(id) {
+  history = history.filter(
+    entry => entry.id !== id
+  );
+
+  saveHistory();
+  renderHistory();
+}
+
+function clearAllQuantities() {
+  for (const sellerId of Object.keys(SELLER_ITEMS)) {
+    for (const productName of SELLER_ITEMS[sellerId]) {
+      quantities[makeQuantityKey(
+        sellerId,
+        productName
+      )] = 0;
+    }
+  }
+
+  saveQuantities();
+  renderAll();
+
+  showToast("Все ячейки очищены");
+}
+
+/* =========================
+   MENU
+========================= */
+
+const menuButton =
+  document.getElementById("menuButton");
+
+const overlay =
+  document.getElementById("overlay");
+
+const closePanel =
+  document.getElementById("closePanel");
+
+function openMenu() {
+  overlay.classList.add("open");
+  menuButton.classList.add("hidden");
+}
+
+function closeMenu() {
+  overlay.classList.remove("open");
+  menuButton.classList.remove("hidden");
+}
+
+menuButton.addEventListener("click", openMenu);
+closePanel.addEventListener("click", closeMenu);
+
+overlay.addEventListener("click", event => {
+  if (event.target === overlay) {
+    closeMenu();
+  }
+});
+
+/* =========================
+   SEARCH
+========================= */
+
+document
+  .getElementById("search")
+  .addEventListener("input", renderAll);
+
+/* =========================
+   CLEAR
+========================= */
+
+document
+  .getElementById("clearButton")
+  .addEventListener("click", clearAllQuantities);
+
+/* =========================
+   AI MODAL
+========================= */
+
+const aiButton =
+  document.getElementById("aiButton");
+
+const aiModal =
+  document.getElementById("aiModal");
+
+const closeAiModal =
+  document.getElementById("closeAiModal");
+
+const pasteZone =
+  document.getElementById("pasteZone");
+
+const pasteButton =
+  document.getElementById("pasteButton");
+
+const imageFile =
+  document.getElementById("imageFile");
+
+const imagePreview =
+  document.getElementById("imagePreview");
+
+const previewImage =
+  document.getElementById("previewImage");
+
+const previewCaption =
+  document.getElementById("previewCaption");
+
+const aiStatus =
+  document.getElementById("aiStatus");
+
+const recognitionResult =
+  document.getElementById("recognitionResult");
+
+const recognitionList =
+  document.getElementById("recognitionList");
+
+const resultSummary =
+  document.getElementById("resultSummary");
+
+const retryRecognition =
+  document.getElementById("retryRecognition");
+
+const applyRecognition =
+  document.getElementById("applyRecognition");
+
+function openAiModal() {
+  aiModal.classList.add("open");
+
+  aiStatus.textContent =
+    "Сделай скриншот и нажми Ctrl+V";
+
+  pasteZone.focus();
+}
+
+function closeAiModalWindow() {
+  aiModal.classList.remove("open");
+}
+
+aiButton.addEventListener("click", openAiModal);
+closeAiModal.addEventListener("click", closeAiModalWindow);
+
+aiModal.addEventListener("click", event => {
+  if (event.target === aiModal) {
+    closeAiModalWindow();
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    if (aiModal.classList.contains("open")) {
+      closeAiModalWindow();
+    }
+
+    if (overlay.classList.contains("open")) {
+      closeMenu();
+    }
+  }
+});
+
+/* =========================
+   CLIPBOARD PASTE
+========================= */
+
+function findImageInClipboard(clipboardData) {
+  if (!clipboardData || !clipboardData.items) {
+    return null;
+  }
+
+  for (const item of clipboardData.items) {
+    if (
+      item.kind === "file" &&
+      item.type.startsWith("image/")
+    ) {
+      return item.getAsFile();
+    }
+  }
+
+  return null;
+}
+
+async function handleClipboardImage(file) {
+  if (!file) {
+    aiStatus.textContent =
+      "В буфере нет изображения. Сначала сделай скриншот.";
+    return;
+  }
+
+  await loadImageFile(file, "Скриншот вставлен из буфера обмена");
+}
+
+document.addEventListener("paste", event => {
+  if (!aiModal.classList.contains("open")) {
+    return;
+  }
+
+  const image = findImageInClipboard(
+    event.clipboardData
+  );
+
+  if (!image) {
+    return;
+  }
+
+  event.preventDefault();
+  handleClipboardImage(image);
+});
+
+pasteZone.addEventListener("paste", event => {
+  const image = findImageInClipboard(
+    event.clipboardData
+  );
+
+  if (!image) {
+    return;
+  }
+
+  event.preventDefault();
+  handleClipboardImage(image);
+});
+
+pasteZone.addEventListener("focus", () => {
+  pasteZone.classList.add("focused");
+});
+
+pasteZone.addEventListener("blur", () => {
+  pasteZone.classList.remove("focused");
+});
+
+/* =========================
+   CLIPBOARD BUTTON
+========================= */
+
+pasteButton.addEventListener("click", async () => {
+  try {
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      pasteZone.focus();
+
+      aiStatus.textContent =
+        "Нажми Ctrl+V после копирования скриншота.";
+
+      return;
+    }
+
+    const items =
+      await navigator.clipboard.read();
+
+    for (const item of items) {
+      const imageType =
+        item.types.find(type =>
+          type.startsWith("image/")
+        );
+
+      if (!imageType) {
+        continue;
+      }
+
+      const blob =
+        await item.getType(imageType);
+
+      await loadImageFile(
+        blob,
+        "Скриншот вставлен из буфера обмена"
+      );
+
+      return;
+    }
+
+    aiStatus.textContent =
+      "В буфере не найдено изображение.";
+  } catch (error) {
+    console.error(error);
+
+    pasteZone.focus();
+
+    aiStatus.textContent =
+      "Не удалось прочитать буфер. Нажми Ctrl+V.";
+  }
+});
+
+/* =========================
+   FILE INPUT
+========================= */
+
+imageFile.addEventListener("change", async () => {
+  const file = imageFile.files?.[0];
+
+  if (!file) return;
+
+  await loadImageFile(
+    file,
+    "Изображение загружено из файла"
+  );
+});
+
+async function loadImageFile(file, caption) {
+  if (!file || !String(file.type).startsWith("image/")) {
+    aiStatus.textContent =
+      "Нужен именно файл изображения.";
+    return;
+  }
+
+  try {
+    const dataUrl =
+      await fileToDataUrl(file);
+
+    currentImageDataUrl = dataUrl;
+
+    previewImage.src = dataUrl;
+    previewCaption.textContent = caption;
+
+    imagePreview.classList.add("open");
+
+    recognitionResult.classList.remove("open");
+    recognitionList.innerHTML = "";
+    resultSummary.textContent = "";
+
+    currentRecognition = [];
+
+    aiStatus.textContent =
+      "Изображение готово. Можно запускать распознавание.";
+
+    await recognizeCurrentImage();
+  } catch (error) {
+    console.error(error);
+
+    aiStatus.textContent =
+      "Не удалось загрузить изображение.";
+  }
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve(String(reader.result));
+    };
+
+    reader.onerror = () => {
+      reject(
+        new Error("Ошибка чтения файла")
+      );
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/* =========================
+   AI RECOGNITION
+========================= */
+
+async function recognizeCurrentImage() {
+  if (!currentImageDataUrl) {
+    aiStatus.textContent =
+      "Сначала вставь или выбери изображение.";
+    return;
+  }
+
+  recognitionResult.classList.remove("open");
+  currentRecognition = [];
+
+  retryRecognition.disabled = true;
+  applyRecognition.disabled = true;
+
+  aiStatus.textContent =
+    "🤖 Распознаю предметы...";
+
+  try {
+    const response = await fetch(
+      "/api/recognize",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          image: currentImageDataUrl
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        "Ошибка сервера"
+      );
+    }
+
+    const items = Array.isArray(result.items)
+      ? result.items
+      : [];
+
+    const merged = {};
+
+    for (const item of items) {
+      if (
+        !item ||
+        !ALLOWED_AI_ITEMS.includes(item.name)
+      ) {
+        continue;
+      }
+
+      const quantity =
+        Math.max(
+          0,
+          Math.floor(
+            Number(item.quantity) || 0
+          )
+        );
+
+      const confidence =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            Number(item.confidence) || 0
+          )
+        );
+
+      if (!merged[item.name]) {
+        merged[item.name] = {
+          name: item.name,
+          quantity: 0,
+          confidence
+        };
+      }
+
+      merged[item.name].quantity += quantity;
+
+      merged[item.name].confidence =
+        Math.max(
+          merged[item.name].confidence,
+          confidence
+        );
+    }
+
+    currentRecognition =
+      Object.values(merged)
+        .filter(item => item.quantity > 0);
+
+    renderRecognition();
+
+    recognitionResult.classList.add("open");
+
+    retryRecognition.disabled = false;
+    applyRecognition.disabled =
+      currentRecognition.length === 0;
+
+    if (!currentRecognition.length) {
+      aiStatus.textContent =
+        "Не удалось уверенно распознать подходящие предметы.";
+    } else {
+      aiStatus.textContent =
+        "Распознавание завершено.";
+    }
+  } catch (error) {
+    console.error(error);
+
+    aiStatus.textContent =
+      "Ошибка распознавания: " +
+      (error?.message || "неизвестная ошибка");
+
+    retryRecognition.disabled = false;
+    applyRecognition.disabled = true;
+  }
+}
+
+function renderRecognition() {
+  recognitionList.innerHTML = "";
+
+  if (!currentRecognition.length) {
+    const empty =
+      document.createElement("div");
+
+    empty.className = "empty";
+    empty.textContent =
+      "Подходящих предметов не найдено.";
+
+    recognitionList.appendChild(empty);
+
+    resultSummary.textContent =
+      "Ничего не будет изменено.";
+
+    return;
+  }
+
+  let totalItems = 0;
+
+  for (const item of currentRecognition) {
+    totalItems += item.quantity;
+
+    const row =
+      document.createElement("div");
+
+    row.className = "recognition-row";
+
+    const name =
+      document.createElement("div");
+
+    name.className = "recognition-name";
+    name.textContent = item.name;
+
+    const qty =
+      document.createElement("div");
+
+    qty.className = "recognition-qty";
+    qty.textContent = "× " + item.quantity;
+
+    const confidence =
+      document.createElement("div");
+
+    confidence.className =
+      "recognition-confidence";
+
+    confidence.textContent =
+      Math.round(item.confidence * 100) +
+      "%";
+
+    row.appendChild(name);
+    row.appendChild(qty);
+    row.appendChild(confidence);
+
+    recognitionList.appendChild(row);
+  }
+
+  resultSummary.textContent =
+    "Всего распознано предметов: " +
+    totalItems +
+    ". Стоимость здесь не считается — после применения сайт сам рассчитает её по актуальным ценам.";
+}
+
+/* =========================
+   APPLY AI
+========================= */
+
+applyRecognition.addEventListener("click", () => {
+  if (!currentRecognition.length) {
+    return;
+  }
+
+  for (const item of currentRecognition) {
+    applyRecognizedItem(item.name, item.quantity);
+  }
+
+  saveQuantities();
+  renderAll();
+
+  showToast(
+    "Распознанные количества применены"
+  );
+
+  closeAiModalWindow();
+});
+
+function findSellerForProduct(productName) {
+  for (const sellerId of Object.keys(SELLER_ITEMS)) {
+    if (
+      SELLER_ITEMS[sellerId].includes(productName)
+    ) {
+      return sellerId;
+    }
+  }
+
+  return null;
+}
+
+function applyRecognizedItem(productName, quantity) {
+  const sellerId =
+    findSellerForProduct(productName);
+
+  if (!sellerId) {
+    return;
+  }
+
+  setQuantity(
+    sellerId,
+    productName,
+    quantity
+  );
+}
+
+/* =========================
+   RETRY
+========================= */
+
+retryRecognition.addEventListener(
+  "click",
+  recognizeCurrentImage
+);
+
+/* =========================
+   TOAST
+========================= */
+
+let toastTimer = null;
+
+function showToast(message) {
+  const toast =
+    document.getElementById("toast");
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+
+  toastTimer =
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 1800);
+}
+
+/* =========================
+   INIT
+========================= */
+
+renderHistory();
+renderAll();
+loadPrices();
+</script>
+
+</body>
+</html>
