@@ -172,18 +172,12 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
 Твоя задача:
 1. Найти на изображении все предметы из разрешённого списка.
 2. Определить количество каждого предмета.
-3. Если один и тот же предмет встречается несколько раз, объединить его количество.
+3. Если один и тот же предмет встречается несколько раз, объединить количество.
 4. Игнорировать любые предметы, которых нет в разрешённом списке.
 5. Ничего не придумывать.
 6. Не считать стоимость.
 7. Не объяснять результат.
-8. Вернуть только JSON, соответствующий заданной схеме.
-
-Особое внимание уделяй:
-- маленьким иконкам;
-- цифрам количества;
-- предметам, расположенным в разных местах изображения;
-- повторяющимся предметам.
+8. Вернуть только JSON по заданной схеме.
 
 Если предмет виден, но количество определить невозможно, не добавляй его.
 `;
@@ -284,7 +278,6 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
         parsed?.error?.type ||
         rawText;
     } catch {
-      // Оставляем исходный ответ.
     }
 
     return errorResponse(
@@ -334,18 +327,30 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
     );
   }
 
-  const items = cleanRecognition(
-    parsedOutput?.items
-  );
-
   return jsonResponse({
-    items
+    items: cleanRecognition(
+      parsedOutput?.items
+    )
   });
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // ДИАГНОСТИКА:
+    // Проверяем только наличие секрета,
+    // но никогда не показываем сам ключ.
+    if (
+      url.pathname === "/api/test-key" &&
+      request.method === "GET"
+    ) {
+      return jsonResponse({
+        OPENAI_API_KEY: env.OPENAI_API_KEY
+          ? "НАЙДЕН"
+          : "НЕ НАЙДЕН"
+      });
+    }
 
     // API распознавания
     if (
@@ -355,7 +360,6 @@ export default {
       return recognizeImage(request, env);
     }
 
-    // Явно отвечаем на GET /api/recognize
     if (url.pathname === "/api/recognize") {
       return jsonResponse(
         {
@@ -365,7 +369,6 @@ export default {
       );
     }
 
-    // Всё остальное отдаём как обычные файлы сайта.
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
