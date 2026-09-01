@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "wendex",
+  "name": "23-15-01-09",
   "main": "./_worker.js",
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
