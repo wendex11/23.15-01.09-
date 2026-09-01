@@ -1,9 +1,11 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "wendex",
-  "main": "_worker.js",
-  "compatibility_date": "2026-08-31",
+  "main": "./_worker.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
   "assets": {
+    "binding": "ASSETS",
     "directory": "./"
   }
 }
