@@ -17,6 +17,10 @@ const ALLOWED_ITEMS = [
   "Мясо хрюши"
 ];
 
+/* =========================
+   JSON HELPERS
+========================= */
+
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -28,16 +32,20 @@ function jsonResponse(data, status = 200) {
 }
 
 function errorResponse(message, status = 500, details = null) {
-  const body = {
+  const result = {
     error: message
   };
 
   if (details) {
-    body.details = String(details);
+    result.details = String(details);
   }
 
-  return jsonResponse(body, status);
+  return jsonResponse(result, status);
 }
+
+/* =========================
+   OPENAI RESPONSE PARSER
+========================= */
 
 function extractOutputText(result) {
   if (
@@ -71,6 +79,10 @@ function extractOutputText(result) {
   return "";
 }
 
+/* =========================
+   RECOGNITION CLEANUP
+========================= */
+
 function cleanRecognition(items) {
   if (!Array.isArray(items)) {
     return [];
@@ -95,7 +107,10 @@ function cleanRecognition(items) {
       continue;
     }
 
-    quantity = Math.max(0, Math.floor(quantity));
+    quantity = Math.max(
+      0,
+      Math.floor(quantity)
+    );
 
     if (quantity === 0) {
       continue;
@@ -123,6 +138,7 @@ function cleanRecognition(items) {
     const current = merged.get(name);
 
     current.quantity += quantity;
+
     current.confidence = Math.max(
       current.confidence,
       confidence
@@ -132,13 +148,34 @@ function cleanRecognition(items) {
   return Array.from(merged.values());
 }
 
+/* =========================
+   AI RECOGNITION
+========================= */
+
 async function recognizeImage(request, env) {
-  if (!env.OPENAI_API_KEY) {
+
+  /*
+    ВАЖНАЯ ДИАГНОСТИКА
+
+    Не выводим значение ключа.
+    Проверяем только наличие.
+  */
+
+  console.log(
+    "ENV KEYS:",
+    Object.keys(env || {})
+  );
+
+  if (!env?.OPENAI_API_KEY) {
     return errorResponse(
       "OPENAI_API_KEY не настроен в Cloudflare.",
       500
     );
   }
+
+  /* =========================
+     READ REQUEST
+  ========================= */
 
   let body;
 
@@ -163,35 +200,50 @@ async function recognizeImage(request, env) {
     );
   }
 
+  /* =========================
+     AI PROMPT
+  ========================= */
+
   const prompt = `
-Ты распознаёшь инвентарь на скриншоте игры.
+Ты распознаёшь предметы на скриншоте инвентаря игры.
 
-РАЗРЕШЁННЫЙ СПИСОК ПРЕДМЕТОВ:
-${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
+РАЗРЕШЁННЫЕ ПРЕДМЕТЫ:
 
-Твоя задача:
-1. Найти на изображении все предметы из разрешённого списка.
-2. Определить количество каждого предмета.
-3. Если один и тот же предмет встречается несколько раз, объединить количество.
-4. Игнорировать любые предметы, которых нет в разрешённом списке.
-5. Ничего не придумывать.
-6. Не считать стоимость.
-7. Не объяснять результат.
-8. Вернуть только JSON по заданной схеме.
+${ALLOWED_ITEMS.map(
+  item => "- " + item
+).join("\n")}
 
-Если предмет виден, но количество определить невозможно, не добавляй его.
+ПРАВИЛА:
+
+1. Найди все предметы из разрешённого списка.
+2. Для каждого предмета определи количество.
+3. Если один предмет встречается несколько раз, объедини количество.
+4. Не добавляй предметы вне разрешённого списка.
+5. Игнорируй неизвестные предметы.
+6. Не считай стоимость.
+7. Не добавляй пояснения.
+8. Верни только JSON по указанной схеме.
+9. Если количество невозможно определить, не добавляй предмет.
+10. Будь особенно внимателен к маленьким цифрам количества.
 `;
+
+  /* =========================
+     OPENAI REQUEST
+  ========================= */
 
   const openaiPayload = {
     model: "gpt-5",
+
     input: [
       {
         role: "user",
+
         content: [
           {
             type: "input_text",
             text: prompt
           },
+
           {
             type: "input_image",
             image_url: imageDataUrl,
@@ -200,35 +252,47 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
         ]
       }
     ],
+
     text: {
       format: {
         type: "json_schema",
+
         name: "inventory_recognition",
+
         strict: true,
+
         schema: {
           type: "object",
+
           additionalProperties: false,
+
           properties: {
             items: {
               type: "array",
+
               items: {
                 type: "object",
+
                 additionalProperties: false,
+
                 properties: {
                   name: {
                     type: "string",
                     enum: ALLOWED_ITEMS
                   },
+
                   quantity: {
                     type: "integer",
                     minimum: 0
                   },
+
                   confidence: {
                     type: "number",
                     minimum: 0,
                     maximum: 1
                   }
                 },
+
                 required: [
                   "name",
                   "quantity",
@@ -237,7 +301,10 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
               }
             }
           },
-          required: ["items"]
+
+          required: [
+            "items"
+          ]
         }
       }
     }
@@ -250,14 +317,25 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
       "https://api.openai.com/v1/responses",
       {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+          "Authorization":
+            `Bearer ${env.OPENAI_API_KEY}`
         },
-        body: JSON.stringify(openaiPayload)
+
+        body: JSON.stringify(
+          openaiPayload
+        )
       }
     );
   } catch (networkError) {
+
+    console.error(
+      "OpenAI network error:",
+      networkError
+    );
+
     return errorResponse(
       "Не удалось связаться с OpenAI API.",
       502,
@@ -265,19 +343,34 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
     );
   }
 
-  const rawText = await openaiResponse.text();
+  /* =========================
+     READ OPENAI RESPONSE
+  ========================= */
+
+  const rawText =
+    await openaiResponse.text();
 
   if (!openaiResponse.ok) {
+
+    console.error(
+      "OpenAI HTTP error:",
+      openaiResponse.status,
+      rawText
+    );
+
     let details = rawText;
 
     try {
-      const parsed = JSON.parse(rawText);
+      const parsed =
+        JSON.parse(rawText);
 
       details =
         parsed?.error?.message ||
         parsed?.error?.type ||
         rawText;
+
     } catch {
+      // Оставляем исходный ответ.
     }
 
     return errorResponse(
@@ -288,17 +381,29 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
   }
 
   if (!rawText.trim()) {
+
     return errorResponse(
       "OpenAI API вернул пустой ответ.",
       502
     );
   }
 
+  /* =========================
+     PARSE OPENAI JSON
+  ========================= */
+
   let result;
 
   try {
-    result = JSON.parse(rawText);
+    result =
+      JSON.parse(rawText);
   } catch {
+
+    console.error(
+      "Invalid OpenAI JSON:",
+      rawText.slice(0, 1000)
+    );
+
     return errorResponse(
       "OpenAI API вернул некорректный JSON.",
       502,
@@ -306,20 +411,42 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
     );
   }
 
-  const outputText = extractOutputText(result);
+  /* =========================
+     GET MODEL TEXT
+  ========================= */
+
+  const outputText =
+    extractOutputText(result);
 
   if (!outputText) {
+
+    console.error(
+      "OpenAI output_text is empty:",
+      rawText.slice(0, 1000)
+    );
+
     return errorResponse(
       "OpenAI не вернул результат распознавания.",
       502
     );
   }
 
+  /* =========================
+     PARSE MODEL JSON
+  ========================= */
+
   let parsedOutput;
 
   try {
-    parsedOutput = JSON.parse(outputText);
+    parsedOutput =
+      JSON.parse(outputText);
   } catch {
+
+    console.error(
+      "Invalid model JSON:",
+      outputText
+    );
+
     return errorResponse(
       "Результат распознавания оказался некорректным JSON.",
       502,
@@ -327,58 +454,104 @@ ${ALLOWED_ITEMS.map(item => "- " + item).join("\n")}
     );
   }
 
-  return jsonResponse({
-    items: cleanRecognition(
+  /* =========================
+     CLEAN RESULT
+  ========================= */
+
+  const items =
+    cleanRecognition(
       parsedOutput?.items
-    )
+    );
+
+  return jsonResponse({
+    items
   });
 }
 
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
+/* =========================
+   WORKER
+========================= */
 
-    // ДИАГНОСТИКА:
-    // Проверяем только наличие секрета,
-    // но никогда не показываем сам ключ.
+export default {
+
+  async fetch(request, env) {
+
+    const url =
+      new URL(request.url);
+
+    /* =========================
+       TEST SECRET
+    ========================= */
+
     if (
       url.pathname === "/api/test-key" &&
       request.method === "GET"
     ) {
+
+      console.log(
+        "TEST ENV KEYS:",
+        Object.keys(env || {})
+      );
+
       return jsonResponse({
-        OPENAI_API_KEY: env.OPENAI_API_KEY
-          ? "НАЙДЕН"
-          : "НЕ НАЙДЕН"
+        OPENAI_API_KEY:
+          env?.OPENAI_API_KEY
+            ? "НАЙДЕН"
+            : "НЕ НАЙДЕН"
       });
     }
 
-    // API распознавания
+    /* =========================
+       AI API
+    ========================= */
+
     if (
       url.pathname === "/api/recognize" &&
       request.method === "POST"
     ) {
-      return recognizeImage(request, env);
+
+      return recognizeImage(
+        request,
+        env
+      );
     }
 
-    if (url.pathname === "/api/recognize") {
+    /* =========================
+       WRONG METHOD
+    ========================= */
+
+    if (
+      url.pathname === "/api/recognize"
+    ) {
+
       return jsonResponse(
         {
-          error: "Используй POST /api/recognize"
+          error:
+            "Используй POST /api/recognize"
         },
         405
       );
     }
 
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
+    /* =========================
+       STATIC FILES
+    ========================= */
+
+    if (env?.ASSETS) {
+
+      return env.ASSETS.fetch(
+        request
+      );
     }
 
     return new Response(
       "ASSETS binding не настроен.",
       {
         status: 500,
+
         headers: {
-          "Content-Type": "text/plain; charset=utf-8"
+          "Content-Type":
+            "text/plain; charset=utf-8"
         }
       }
     );
