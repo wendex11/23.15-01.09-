@@ -1,3 +1,5 @@
+const MODEL = "@cf/google/gemma-4-26b-a4b-it";
+
 const ALLOWED_ITEMS = [
   "Кофе",
   "Помидор",
@@ -17,10 +19,6 @@ const ALLOWED_ITEMS = [
   "Мясо хрюши"
 ];
 
-/* =========================
-   JSON HELPERS
-========================= */
-
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -32,46 +30,68 @@ function jsonResponse(data, status = 200) {
 }
 
 function errorResponse(message, status = 500, details = null) {
-  const result = {
+  const body = {
     error: message
   };
 
   if (details) {
-    result.details = String(details);
+    body.details = String(details);
   }
 
-  return jsonResponse(result, status);
+  return jsonResponse(body, status);
 }
 
-/* =========================
-   OPENAI RESPONSE PARSER
-========================= */
-
-function extractOutputText(result) {
-  if (
-    result &&
-    typeof result.output_text === "string" &&
-    result.output_text.trim()
-  ) {
-    return result.output_text.trim();
-  }
-
-  if (!Array.isArray(result?.output)) {
+function extractText(result) {
+  if (!result) {
     return "";
   }
 
-  for (const outputItem of result.output) {
-    if (!Array.isArray(outputItem?.content)) {
-      continue;
-    }
+  if (typeof result.response === "string") {
+    return result.response.trim();
+  }
 
-    for (const contentItem of outputItem.content) {
-      if (
-        contentItem?.type === "output_text" &&
-        typeof contentItem.text === "string" &&
-        contentItem.text.trim()
-      ) {
-        return contentItem.text.trim();
+  if (typeof result.output_text === "string") {
+    return result.output_text.trim();
+  }
+
+  if (typeof result.text === "string") {
+    return result.text.trim();
+  }
+
+  if (Array.isArray(result.output)) {
+    for (const item of result.output) {
+      if (!Array.isArray(item?.content)) {
+        continue;
+      }
+
+      for (const part of item.content) {
+        if (
+          typeof part?.text === "string" &&
+          part.text.trim()
+        ) {
+          return part.text.trim();
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(result.choices)) {
+    for (const choice of result.choices) {
+      const content = choice?.message?.content;
+
+      if (typeof content === "string" && content.trim()) {
+        return content.trim();
+      }
+
+      if (Array.isArray(content)) {
+        for (const part of content) {
+          if (
+            typeof part?.text === "string" &&
+            part.text.trim()
+          ) {
+            return part.text.trim();
+          }
+        }
       }
     }
   }
@@ -79,9 +99,13 @@ function extractOutputText(result) {
   return "";
 }
 
-/* =========================
-   RECOGNITION CLEANUP
-========================= */
+function removeMarkdownFences(text) {
+  return String(text || "")
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+}
 
 function cleanRecognition(items) {
   if (!Array.isArray(items)) {
@@ -107,12 +131,9 @@ function cleanRecognition(items) {
       continue;
     }
 
-    quantity = Math.max(
-      0,
-      Math.floor(quantity)
-    );
+    quantity = Math.floor(quantity);
 
-    if (quantity === 0) {
+    if (quantity <= 0) {
       continue;
     }
 
@@ -138,7 +159,6 @@ function cleanRecognition(items) {
     const current = merged.get(name);
 
     current.quantity += quantity;
-
     current.confidence = Math.max(
       current.confidence,
       confidence
@@ -148,34 +168,13 @@ function cleanRecognition(items) {
   return Array.from(merged.values());
 }
 
-/* =========================
-   AI RECOGNITION
-========================= */
-
 async function recognizeImage(request, env) {
-
-  /*
-    ВАЖНАЯ ДИАГНОСТИКА
-
-    Не выводим значение ключа.
-    Проверяем только наличие.
-  */
-
-  console.log(
-    "ENV KEYS:",
-    Object.keys(env || {})
-  );
-
-  if (!env?.OPENAI_API_KEY) {
+  if (!env?.AI) {
     return errorResponse(
-      "OPENAI_API_KEY не настроен в Cloudflare.",
+      "Workers AI не подключён к Worker. Проверь binding AI.",
       500
     );
   }
-
-  /* =========================
-     READ REQUEST
-  ========================= */
 
   let body;
 
@@ -200,345 +199,227 @@ async function recognizeImage(request, env) {
     );
   }
 
-  /* =========================
-     AI PROMPT
-  ========================= */
+  /*
+    Ограничение размера запроса.
+    Не даём случайно отправить огромный файл.
+  */
+  if (imageDataUrl.length > 12_000_000) {
+    return errorResponse(
+      "Скриншот слишком большой.",
+      413
+    );
+  }
 
-  const prompt = `
-Ты распознаёшь предметы на скриншоте инвентаря игры.
+  const systemPrompt = `
+Ты — система распознавания предметов инвентаря игры.
 
-РАЗРЕШЁННЫЕ ПРЕДМЕТЫ:
+Тебе передан скриншот инвентаря.
+
+Нужно распознавать ТОЛЬКО следующие предметы:
 
 ${ALLOWED_ITEMS.map(
-  item => "- " + item
+  item => `- ${item}`
 ).join("\n")}
 
-ПРАВИЛА:
+СТРОГИЕ ПРАВИЛА:
 
-1. Найди все предметы из разрешённого списка.
-2. Для каждого предмета определи количество.
-3. Если один предмет встречается несколько раз, объедини количество.
-4. Не добавляй предметы вне разрешённого списка.
-5. Игнорируй неизвестные предметы.
-6. Не считай стоимость.
-7. Не добавляй пояснения.
-8. Верни только JSON по указанной схеме.
-9. Если количество невозможно определить, не добавляй предмет.
-10. Будь особенно внимателен к маленьким цифрам количества.
+1. Определи все видимые предметы из разрешённого списка.
+2. Для каждого предмета определи число, указанное на его ячейке.
+3. Если один и тот же предмет встречается несколько раз, сложи количества.
+4. Игнорируй все предметы, которых нет в разрешённом списке.
+5. Не придумывай отсутствующие предметы.
+6. Не рассчитывай деньги.
+7. Не меняй названия предметов.
+8. Если количество невозможно уверенно определить, не добавляй такой предмет.
+9. Особенно внимательно смотри на маленькие цифры возле иконок.
+10. Верни ТОЛЬКО JSON без Markdown и без пояснений.
+
+Формат ответа:
+
+{
+  "items": [
+    {
+      "name": "Название предмета",
+      "quantity": 123,
+      "confidence": 0.95
+    }
+  ]
+}
+
+confidence — число от 0 до 1.
 `;
 
-  /* =========================
-     OPENAI REQUEST
-  ========================= */
-
-  const openaiPayload = {
-    model: "gpt-5",
-
-    input: [
-      {
-        role: "user",
-
-        content: [
-          {
-            type: "input_text",
-            text: prompt
-          },
-
-          {
-            type: "input_image",
-            image_url: imageDataUrl,
-            detail: "high"
+  /*
+    Gemma 4 на Workers AI поддерживает vision.
+    Изображение передаём как data URL.
+  */
+  const messages = [
+    {
+      role: "system",
+      content: systemPrompt
+    },
+    {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text:
+            "Распознай предметы на этом скриншоте инвентаря."
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: imageDataUrl
           }
-        ]
-      }
-    ],
-
-    text: {
-      format: {
-        type: "json_schema",
-
-        name: "inventory_recognition",
-
-        strict: true,
-
-        schema: {
-          type: "object",
-
-          additionalProperties: false,
-
-          properties: {
-            items: {
-              type: "array",
-
-              items: {
-                type: "object",
-
-                additionalProperties: false,
-
-                properties: {
-                  name: {
-                    type: "string",
-                    enum: ALLOWED_ITEMS
-                  },
-
-                  quantity: {
-                    type: "integer",
-                    minimum: 0
-                  },
-
-                  confidence: {
-                    type: "number",
-                    minimum: 0,
-                    maximum: 1
-                  }
-                },
-
-                required: [
-                  "name",
-                  "quantity",
-                  "confidence"
-                ]
-              }
-            }
-          },
-
-          required: [
-            "items"
-          ]
         }
-      }
+      ]
     }
-  };
+  ];
 
-  let openaiResponse;
+  let aiResult;
 
   try {
-    openaiResponse = await fetch(
-      "https://api.openai.com/v1/responses",
+    aiResult = await env.AI.run(
+      MODEL,
       {
-        method: "POST",
+        messages,
 
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization":
-            `Bearer ${env.OPENAI_API_KEY}`
+        /*
+          JSON Mode поддерживается Workers AI.
+          Схему дополнительно описываем в системном prompt,
+          чтобы модель возвращала только нужную структуру.
+        */
+        response_format: {
+          type: "json_object"
         },
 
-        body: JSON.stringify(
-          openaiPayload
-        )
+        max_tokens: 1200,
+
+        temperature: 0
       }
     );
-  } catch (networkError) {
-
+  } catch (error) {
     console.error(
-      "OpenAI network error:",
-      networkError
+      "Workers AI error:",
+      error
     );
 
     return errorResponse(
-      "Не удалось связаться с OpenAI API.",
+      "Ошибка Workers AI.",
       502,
-      networkError?.message
+      error?.message || String(error)
     );
   }
 
-  /* =========================
-     READ OPENAI RESPONSE
-  ========================= */
-
-  const rawText =
-    await openaiResponse.text();
-
-  if (!openaiResponse.ok) {
-
-    console.error(
-      "OpenAI HTTP error:",
-      openaiResponse.status,
-      rawText
-    );
-
-    let details = rawText;
-
-    try {
-      const parsed =
-        JSON.parse(rawText);
-
-      details =
-        parsed?.error?.message ||
-        parsed?.error?.type ||
-        rawText;
-
-    } catch {
-      // Оставляем исходный ответ.
-    }
-
-    return errorResponse(
-      "OpenAI API вернул ошибку.",
-      openaiResponse.status,
-      details
-    );
-  }
-
-  if (!rawText.trim()) {
-
-    return errorResponse(
-      "OpenAI API вернул пустой ответ.",
-      502
-    );
-  }
-
-  /* =========================
-     PARSE OPENAI JSON
-  ========================= */
-
-  let result;
-
-  try {
-    result =
-      JSON.parse(rawText);
-  } catch {
-
-    console.error(
-      "Invalid OpenAI JSON:",
-      rawText.slice(0, 1000)
-    );
-
-    return errorResponse(
-      "OpenAI API вернул некорректный JSON.",
-      502,
-      rawText.slice(0, 500)
-    );
-  }
-
-  /* =========================
-     GET MODEL TEXT
-  ========================= */
-
-  const outputText =
-    extractOutputText(result);
+  /*
+    Некоторые версии Workers AI могут вернуть
+    результат в разных полях.
+  */
+  let outputText = extractText(aiResult);
 
   if (!outputText) {
-
     console.error(
-      "OpenAI output_text is empty:",
-      rawText.slice(0, 1000)
+      "Empty Workers AI response:",
+      aiResult
     );
 
     return errorResponse(
-      "OpenAI не вернул результат распознавания.",
+      "Workers AI не вернул результат.",
       502
     );
   }
 
-  /* =========================
-     PARSE MODEL JSON
-  ========================= */
+  outputText = removeMarkdownFences(
+    outputText
+  );
 
-  let parsedOutput;
+  let parsed;
 
   try {
-    parsedOutput =
-      JSON.parse(outputText);
-  } catch {
-
+    parsed = JSON.parse(outputText);
+  } catch (error) {
     console.error(
-      "Invalid model JSON:",
+      "Invalid JSON from Workers AI:",
       outputText
     );
 
     return errorResponse(
-      "Результат распознавания оказался некорректным JSON.",
+      "Workers AI вернул некорректный JSON.",
       502,
-      outputText.slice(0, 500)
+      outputText.slice(0, 1000)
     );
   }
 
-  /* =========================
-     CLEAN RESULT
-  ========================= */
-
-  const items =
-    cleanRecognition(
-      parsedOutput?.items
-    );
+  const items = cleanRecognition(
+    parsed?.items
+  );
 
   return jsonResponse({
     items
   });
 }
 
-/* =========================
-   WORKER
-========================= */
-
 export default {
-
   async fetch(request, env) {
 
-    const url =
-      new URL(request.url);
+    const url = new URL(
+      request.url
+    );
 
-    /* =========================
-       TEST SECRET
-    ========================= */
-
+    /*
+      Проверка Workers AI.
+      Открой:
+      /api/test-ai
+    */
     if (
-      url.pathname === "/api/test-key" &&
+      url.pathname === "/api/test-ai" &&
       request.method === "GET"
     ) {
 
-      console.log(
-        "TEST ENV KEYS:",
-        Object.keys(env || {})
-      );
+      if (!env?.AI) {
+        return jsonResponse({
+          AI: "НЕ ПОДКЛЮЧЕН"
+        });
+      }
 
       return jsonResponse({
-        OPENAI_API_KEY:
-          env?.OPENAI_API_KEY
-            ? "НАЙДЕН"
-            : "НЕ НАЙДЕН"
+        AI: "ПОДКЛЮЧЕН",
+        model: MODEL
       });
     }
 
-    /* =========================
-       AI API
-    ========================= */
-
+    /*
+      Распознавание изображения.
+    */
     if (
       url.pathname === "/api/recognize" &&
       request.method === "POST"
     ) {
-
       return recognizeImage(
         request,
         env
       );
     }
 
-    /* =========================
-       WRONG METHOD
-    ========================= */
-
+    /*
+      Защита от GET-запроса к API.
+    */
     if (
       url.pathname === "/api/recognize"
     ) {
-
       return jsonResponse(
         {
           error:
-            "Используй POST /api/recognize"
+            "Для распознавания нужен POST-запрос с изображением."
         },
         405
       );
     }
 
-    /* =========================
-       STATIC FILES
-    ========================= */
-
+    /*
+      Отдаём index.html и остальные файлы.
+    */
     if (env?.ASSETS) {
-
       return env.ASSETS.fetch(
         request
       );
@@ -548,7 +429,6 @@ export default {
       "ASSETS binding не настроен.",
       {
         status: 500,
-
         headers: {
           "Content-Type":
             "text/plain; charset=utf-8"
