@@ -20,7 +20,7 @@ const ALLOWED_ITEMS = [
 ];
 
 function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
+  return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
@@ -30,81 +30,13 @@ function jsonResponse(data, status = 200) {
 }
 
 function errorResponse(message, status = 500, details = null) {
-  const body = {
-    error: message
-  };
-
-  if (details) {
-    body.details = String(details);
-  }
-
-  return jsonResponse(body, status);
-}
-
-function extractText(result) {
-  if (!result) {
-    return "";
-  }
-
-  if (typeof result.response === "string") {
-    return result.response.trim();
-  }
-
-  if (typeof result.output_text === "string") {
-    return result.output_text.trim();
-  }
-
-  if (typeof result.text === "string") {
-    return result.text.trim();
-  }
-
-  if (Array.isArray(result.output)) {
-    for (const item of result.output) {
-      if (!Array.isArray(item?.content)) {
-        continue;
-      }
-
-      for (const part of item.content) {
-        if (
-          typeof part?.text === "string" &&
-          part.text.trim()
-        ) {
-          return part.text.trim();
-        }
-      }
-    }
-  }
-
-  if (Array.isArray(result.choices)) {
-    for (const choice of result.choices) {
-      const content = choice?.message?.content;
-
-      if (typeof content === "string" && content.trim()) {
-        return content.trim();
-      }
-
-      if (Array.isArray(content)) {
-        for (const part of content) {
-          if (
-            typeof part?.text === "string" &&
-            part.text.trim()
-          ) {
-            return part.text.trim();
-          }
-        }
-      }
-    }
-  }
-
-  return "";
-}
-
-function removeMarkdownFences(text) {
-  return String(text || "")
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+  return jsonResponse(
+    {
+      error: message,
+      ...(details ? { details: String(details) } : {})
+    },
+    status
+  );
 }
 
 function cleanRecognition(items) {
@@ -143,10 +75,7 @@ function cleanRecognition(items) {
       confidence = 0;
     }
 
-    confidence = Math.max(
-      0,
-      Math.min(1, confidence)
-    );
+    confidence = Math.max(0, Math.min(1, confidence));
 
     if (!merged.has(name)) {
       merged.set(name, {
@@ -168,10 +97,18 @@ function cleanRecognition(items) {
   return Array.from(merged.values());
 }
 
+function removeMarkdown(text) {
+  return String(text || "")
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+}
+
 async function recognizeImage(request, env) {
   if (!env?.AI) {
     return errorResponse(
-      "Workers AI не подключён к Worker. Проверь binding AI.",
+      "Workers AI binding AI не подключён.",
       500
     );
   }
@@ -182,7 +119,7 @@ async function recognizeImage(request, env) {
     body = await request.json();
   } catch {
     return errorResponse(
-      "Сервер получил некорректный JSON.",
+      "Некорректный JSON от сайта.",
       400
     );
   }
@@ -194,53 +131,42 @@ async function recognizeImage(request, env) {
     !imageDataUrl.startsWith("data:image/")
   ) {
     return errorResponse(
-      "Изображение не передано или имеет неверный формат.",
+      "Изображение не передано.",
       400
     );
   }
 
-  /*
-    Ограничение размера запроса.
-    Не даём случайно отправить огромный файл.
-  */
   if (imageDataUrl.length > 12_000_000) {
     return errorResponse(
-      "Скриншот слишком большой.",
+      "Изображение слишком большое.",
       413
     );
   }
 
-  const systemPrompt = `
-Ты — система распознавания предметов инвентаря игры.
+  const prompt = `
+Ты распознаёшь инвентарь игры по изображению.
 
-Тебе передан скриншот инвентаря.
+Разрешённые предметы:
 
-Нужно распознавать ТОЛЬКО следующие предметы:
+${ALLOWED_ITEMS.map(x => "- " + x).join("\n")}
 
-${ALLOWED_ITEMS.map(
-  item => `- ${item}`
-).join("\n")}
+ЗАДАЧА:
 
-СТРОГИЕ ПРАВИЛА:
-
-1. Определи все видимые предметы из разрешённого списка.
-2. Для каждого предмета определи число, указанное на его ячейке.
-3. Если один и тот же предмет встречается несколько раз, сложи количества.
-4. Игнорируй все предметы, которых нет в разрешённом списке.
+1. Найди на скриншоте все предметы из списка.
+2. Для каждого определи количество.
+3. Если предмет встречается несколько раз, объедини количество.
+4. Игнорируй все остальные предметы.
 5. Не придумывай отсутствующие предметы.
-6. Не рассчитывай деньги.
-7. Не меняй названия предметов.
-8. Если количество невозможно уверенно определить, не добавляй такой предмет.
-9. Особенно внимательно смотри на маленькие цифры возле иконок.
-10. Верни ТОЛЬКО JSON без Markdown и без пояснений.
+6. Не рассчитывай цену.
+7. Верни только JSON.
 
-Формат ответа:
+Формат:
 
 {
   "items": [
     {
-      "name": "Название предмета",
-      "quantity": 123,
+      "name": "Кофе",
+      "quantity": 10,
       "confidence": 0.95
     }
   ]
@@ -249,22 +175,17 @@ ${ALLOWED_ITEMS.map(
 confidence — число от 0 до 1.
 `;
 
-  /*
-    Gemma 4 на Workers AI поддерживает vision.
-    Изображение передаём как data URL.
-  */
   const messages = [
     {
       role: "system",
-      content: systemPrompt
+      content: prompt
     },
     {
       role: "user",
       content: [
         {
           type: "text",
-          text:
-            "Распознай предметы на этом скриншоте инвентаря."
+          text: "Распознай предметы на этом скриншоте."
         },
         {
           type: "image_url",
@@ -285,144 +206,80 @@ confidence — число от 0 до 1.
         messages,
 
         /*
-          JSON Mode поддерживается Workers AI.
-          Схему дополнительно описываем в системном prompt,
-          чтобы модель возвращала только нужную структуру.
-        */
-        response_format: {
-          type: "json_object"
+         * Отключаем reasoning, чтобы модель
+         * возвращала именно полезный ответ.
+         */
+        chat_template_kwargs: {
+          enable_thinking: false
         },
+
+        temperature: 0,
 
         max_tokens: 1200,
 
-        temperature: 0
+        response_format: {
+          type: "json_object"
+        }
       }
     );
   } catch (error) {
     console.error(
-      "Workers AI error:",
+      "Workers AI exception:",
       error
     );
 
     return errorResponse(
-      "Ошибка Workers AI.",
+      "Ошибка при вызове Workers AI.",
       502,
       error?.message || String(error)
     );
   }
 
   /*
-    Некоторые версии Workers AI могут вернуть
-    результат в разных полях.
-  */
-  let outputText = extractText(aiResult);
-
-  if (!outputText) {
-    console.error(
-      "Empty Workers AI response:",
-      aiResult
-    );
-
-    return errorResponse(
-      "Workers AI не вернул результат.",
-      502
-    );
-  }
-
-  outputText = removeMarkdownFences(
-    outputText
-  );
-
-  let parsed;
-
-  try {
-    parsed = JSON.parse(outputText);
-  } catch (error) {
-    console.error(
-      "Invalid JSON from Workers AI:",
-      outputText
-    );
-
-    return errorResponse(
-      "Workers AI вернул некорректный JSON.",
-      502,
-      outputText.slice(0, 1000)
-    );
-  }
-
-  const items = cleanRecognition(
-    parsed?.items
-  );
-
+   * ДИАГНОСТИКА
+   *
+   * Пока НЕ пытаемся угадать,
+   * где Cloudflare положил текст.
+   *
+   * Возвращаем реальный ответ модели.
+   */
   return jsonResponse({
-    items
+    debug: true,
+    model: MODEL,
+    raw: aiResult
   });
 }
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
 
-    const url = new URL(
-      request.url
-    );
-
-    /*
-      Проверка Workers AI.
-      Открой:
-      /api/test-ai
-    */
     if (
       url.pathname === "/api/test-ai" &&
       request.method === "GET"
     ) {
-
-      if (!env?.AI) {
-        return jsonResponse({
-          AI: "НЕ ПОДКЛЮЧЕН"
-        });
-      }
-
       return jsonResponse({
-        AI: "ПОДКЛЮЧЕН",
+        AI: env?.AI ? "ПОДКЛЮЧЕН" : "НЕ ПОДКЛЮЧЕН",
         model: MODEL
       });
     }
 
-    /*
-      Распознавание изображения.
-    */
     if (
       url.pathname === "/api/recognize" &&
       request.method === "POST"
     ) {
-      return recognizeImage(
-        request,
-        env
-      );
+      return recognizeImage(request, env);
     }
 
-    /*
-      Защита от GET-запроса к API.
-    */
-    if (
-      url.pathname === "/api/recognize"
-    ) {
-      return jsonResponse(
-        {
-          error:
-            "Для распознавания нужен POST-запрос с изображением."
-        },
+    if (url.pathname === "/api/recognize") {
+      return errorResponse(
+        "Для распознавания используется POST.",
         405
       );
     }
 
-    /*
-      Отдаём index.html и остальные файлы.
-    */
     if (env?.ASSETS) {
-      return env.ASSETS.fetch(
-        request
-      );
+      return env.ASSETS.fetch(request);
     }
 
     return new Response(
