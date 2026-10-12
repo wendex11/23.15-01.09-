@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -197,11 +198,39 @@ button{
   border-bottom:1px solid rgba(131,220,230,.2);
 }
 
+/* Сворачивание и раскрытие продавцов */
 .seller-name{
   color:var(--cyan);
   font-family:"Russo One",sans-serif;
   font-size:20px;
   text-shadow:0 0 10px rgba(131,220,230,.16);
+  cursor:pointer;
+  user-select:none;
+}
+
+.seller-name::after{
+  content:"＋";
+  display:inline-block;
+  margin-left:10px;
+  font-family:sans-serif;
+  font-size:16px;
+  opacity:.8;
+}
+
+.seller:not(.collapsed) .seller-name::after{
+  content:"−";
+}
+
+.seller.collapsed .seller-body{
+  display:none;
+}
+
+.seller.collapsed .seller-header{
+  border-bottom:none;
+}
+
+.seller.collapsed .sold-button{
+  display:none;
 }
 
 .sold-button{
@@ -1078,6 +1107,13 @@ const SELLERS = {
   }
 };
 
+/* По умолчанию все продавцы свёрнуты */
+const sellerCollapsed = {
+  Logovo: true,
+  Staraptor: true,
+  WhiteFox: true
+};
+
 const ICONS = {
   "Кофе": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/prl2.png",
   "Помидор": "https://cdn3.stalzone.wiki/exbo_item_parser/other/hideout/6rpy.png",
@@ -1307,8 +1343,6 @@ function parseSellerProducts(rows, nameColumn, priceColumn) {
     const name = normalizeName(rawName);
 
     if (!name) continue;
-
-    // Исключаем технические и числовые строки
     if (/^\d+(?:[.,]\d+)?$/.test(name)) continue;
 
     const price = toNumber(rawPrice);
@@ -1371,13 +1405,10 @@ async function loadPrices() {
       }
     }
 
-    // У WhiteFox названия "Мясо" из таблицы различаются неинформативно,
-    // поэтому используем гарантированные цены из актуального списка.
     prices[makeQuantityKey("WhiteFox", "Мясо шавки")] = 3000;
     prices[makeQuantityKey("WhiteFox", "Мясо кабана")] = 3000;
     prices[makeQuantityKey("WhiteFox", "Мясо хрюши")] = 3000;
 
-    // Нормализация известных товаров из таблицы
     prices[makeQuantityKey("Logovo", "Кофе")] =
       prices[makeQuantityKey("Logovo", "Коффе")] ??
       prices[makeQuantityKey("Logovo", "Кофе")] ??
@@ -1389,7 +1420,6 @@ async function loadPrices() {
   } catch (error) {
     console.error(error);
 
-    // Резервные цены, чтобы интерфейс не ломался
     prices = {
       [makeQuantityKey("Logovo","Кофе")]:700,
       [makeQuantityKey("Logovo","Помидор")]:1600,
@@ -1466,9 +1496,15 @@ function renderAll() {
   updateGlobalTotal();
 }
 
+/* Обновлённая функция: каждая колонка раскрывается независимо */
 function renderSeller(sellerId) {
   const seller = document.createElement("section");
   seller.className = "seller";
+
+  seller.classList.toggle(
+    "collapsed",
+    sellerCollapsed[sellerId]
+  );
 
   const header = document.createElement("div");
   header.className = "seller-header";
@@ -1476,6 +1512,39 @@ function renderSeller(sellerId) {
   const title = document.createElement("div");
   title.className = "seller-name";
   title.textContent = SELLERS[sellerId].name;
+  title.setAttribute("role", "button");
+  title.setAttribute("tabindex", "0");
+  title.setAttribute(
+    "aria-expanded",
+    String(!sellerCollapsed[sellerId])
+  );
+  title.setAttribute(
+    "aria-label",
+    "Свернуть или раскрыть: " + SELLERS[sellerId].name
+  );
+
+  function toggleSeller() {
+    sellerCollapsed[sellerId] = !sellerCollapsed[sellerId];
+
+    seller.classList.toggle(
+      "collapsed",
+      sellerCollapsed[sellerId]
+    );
+
+    title.setAttribute(
+      "aria-expanded",
+      String(!sellerCollapsed[sellerId])
+    );
+  }
+
+  title.addEventListener("click", toggleSeller);
+
+  title.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleSeller();
+    }
+  });
 
   const soldButton = document.createElement("button");
   soldButton.type = "button";
@@ -1603,7 +1672,6 @@ function renderProductCard(sellerId, productName) {
   };
 
   input.addEventListener("input", updateFromInput);
-
   input.addEventListener("change", updateFromInput);
 
   quantityArea.appendChild(input);
@@ -1850,9 +1918,7 @@ function clearAllQuantities() {
   showToast("Все ячейки очищены");
 }
 
-/* =========================
-   MENU
-========================= */
+/* MENU */
 
 const menuButton =
   document.getElementById("menuButton");
@@ -1882,25 +1948,19 @@ overlay.addEventListener("click", event => {
   }
 });
 
-/* =========================
-   SEARCH
-========================= */
+/* SEARCH */
 
 document
   .getElementById("search")
   .addEventListener("input", renderAll);
 
-/* =========================
-   CLEAR
-========================= */
+/* CLEAR */
 
 document
   .getElementById("clearButton")
   .addEventListener("click", clearAllQuantities);
 
-/* =========================
-   AI MODAL
-========================= */
+/* AI MODAL */
 
 const aiButton =
   document.getElementById("aiButton");
@@ -1981,9 +2041,7 @@ document.addEventListener("keydown", event => {
   }
 });
 
-/* =========================
-   CLIPBOARD PASTE
-========================= */
+/* CLIPBOARD PASTE */
 
 function findImageInClipboard(clipboardData) {
   if (!clipboardData || !clipboardData.items) {
@@ -2050,9 +2108,7 @@ pasteZone.addEventListener("blur", () => {
   pasteZone.classList.remove("focused");
 });
 
-/* =========================
-   CLIPBOARD BUTTON
-========================= */
+/* CLIPBOARD BUTTON */
 
 pasteButton.addEventListener("click", async () => {
   try {
@@ -2101,9 +2157,7 @@ pasteButton.addEventListener("click", async () => {
   }
 });
 
-/* =========================
-   FILE INPUT
-========================= */
+/* FILE INPUT */
 
 imageFile.addEventListener("change", async () => {
   const file = imageFile.files?.[0];
@@ -2170,9 +2224,7 @@ function fileToDataUrl(file) {
   });
 }
 
-/* =========================
-   AI RECOGNITION
-========================= */
+/* AI RECOGNITION */
 
 async function recognizeCurrentImage() {
   if (!currentImageDataUrl) {
@@ -2356,9 +2408,7 @@ function renderRecognition() {
     ". Стоимость здесь не считается — после применения сайт сам рассчитает её по актуальным ценам.";
 }
 
-/* =========================
-   APPLY AI
-========================= */
+/* APPLY AI */
 
 applyRecognition.addEventListener("click", () => {
   if (!currentRecognition.length) {
@@ -2406,18 +2456,14 @@ function applyRecognizedItem(productName, quantity) {
   );
 }
 
-/* =========================
-   RETRY
-========================= */
+/* RETRY */
 
 retryRecognition.addEventListener(
   "click",
   recognizeCurrentImage
 );
 
-/* =========================
-   TOAST
-========================= */
+/* TOAST */
 
 let toastTimer = null;
 
@@ -2436,9 +2482,7 @@ function showToast(message) {
     }, 1800);
 }
 
-/* =========================
-   INIT
-========================= */
+/* INIT */
 
 renderHistory();
 renderAll();
