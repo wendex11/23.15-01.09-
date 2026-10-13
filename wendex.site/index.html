@@ -174,7 +174,7 @@ button{
 
 .columns{
   display:grid;
-  grid-template-columns:repeat(3,minmax(410px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(min(410px,100%),1fr));
   gap:16px;
   align-items:start;
 }
@@ -1425,11 +1425,6 @@ async function loadPrices() {
     for (const [productName, price] of Object.entries(senyaPrices)) {
       prices[makeQuantityKey("WhiteFox", productName)] = price;
     }
-
-    prices[makeQuantityKey("Logovo", "Кофе")] =
-      prices[makeQuantityKey("Logovo", "Коффе")] ??
-      prices[makeQuantityKey("Logovo", "Кофе")] ??
-      700;
 
     renderAll();
 
