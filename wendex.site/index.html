@@ -1238,6 +1238,11 @@ button{
   top:0;
   right:0;
 }
+#aiRecognitionOpen{
+  position:absolute;
+  top:0;
+  right:142px;
+}
 .topbar .subtitle{
   margin-top:8px;
   text-align:left;
@@ -1254,8 +1259,15 @@ button{
     top:4px;
     right:0;
     min-height:36px;
-    padding:0 10px;
-    font-size:12px;
+    padding:0 9px;
+    font-size:11px;
+  }
+  #aiRecognitionOpen{
+    top:4px;
+    right:119px;
+    min-height:36px;
+    padding:0 8px;
+    font-size:11px;
   }
 }
 .text-import-open{
@@ -1426,6 +1438,7 @@ button{
     <div class="brand-wrap">
       <div class="brand-title-row">
         <h1 class="brand">wendex</h1>
+        <button id="aiRecognitionOpen" class="text-import-open ai-recognition-open" type="button" title="Распознать товары со скриншота">🖼 Распознать скрин</button>
         <button id="textImportOpen" class="text-import-open" type="button" title="Ввести список товаров и количества">＋ Ввод списка</button>
       </div>
       <div class="subtitle">Калькулятор товаров</div>
@@ -2886,6 +2899,8 @@ function openAiModal() {
 function closeAiModalWindow() {
   aiModal.classList.remove("open");
 }
+
+document.getElementById("aiRecognitionOpen").addEventListener("click", openAiModal);
 
 closeAiModal.addEventListener("click", closeAiModalWindow);
 
