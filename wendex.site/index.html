@@ -1161,6 +1161,89 @@ button{
     flex:1 1 auto;
   }
 }
+
+.brand-title-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.text-import-open{
+  min-height:40px;
+  padding:0 14px;
+  border:1px solid rgba(131,220,230,.55);
+  border-radius:11px;
+  background:linear-gradient(180deg,#211431,#150d1e);
+  color:var(--cyan);
+  box-shadow:var(--shadow);
+  font-size:14px;
+  font-weight:900;
+  white-space:nowrap;
+  transition:.15s ease;
+}
+.text-import-open:hover{
+  border-color:var(--cyan);
+  transform:translateY(-1px);
+}
+.text-import-modal{
+  width:min(700px,100%);
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+  border:1px solid rgba(131,220,230,.34);
+  border-radius:18px;
+  background:linear-gradient(180deg,#130d1b,#0c0811);
+  box-shadow:0 25px 70px rgba(0,0,0,.55);
+}
+.text-import-body{padding:18px;}
+.text-import-hint{
+  margin-bottom:12px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+}
+.text-import-area{
+  display:block;
+  width:100%;
+  min-height:220px;
+  resize:vertical;
+  padding:14px;
+  border:1px solid rgba(131,220,230,.35);
+  border-radius:12px;
+  outline:none;
+  background:#0d0912;
+  color:var(--text);
+  font:700 15px/1.65 "Cairo",sans-serif;
+}
+.text-import-area:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px rgba(131,220,230,.08);
+}
+.text-import-preview{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(131,220,230,.16);
+  border-radius:11px;
+  background:#140e1c;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+.text-import-preview strong{color:var(--cyan);}
+.text-import-preview .unmatched{color:#ffb1ba;}
+.text-import-actions{
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:14px;
+}
+@media(max-width:650px){
+  .brand-title-row{gap:10px;}
+  .text-import-open{min-height:36px;padding:0 10px;font-size:12px;}
+  .text-import-area{min-height:180px;}
+}
+
 </style>
 </head>
 
@@ -1172,10 +1255,12 @@ button{
 
   <div class="topbar">
     <div class="brand-wrap">
-      <h1 class="brand">wendex</h1>
+      <div class="brand-title-row">
+        <h1 class="brand">wendex</h1>
+        <button id="textImportOpen" class="text-import-open" type="button" title="Ввести список товаров и количества">＋ Ввод списка</button>
+      </div>
       <div class="subtitle">Калькулятор товаров</div>
     </div>
-
   </div>
 
   <div class="search-row">
@@ -1209,6 +1294,32 @@ button{
 
     <div id="historyList" class="history-list"></div>
   </aside>
+</div>
+
+
+<!-- TEXT QUANTITY IMPORT -->
+<div id="textImportModal" class="modal-backdrop">
+  <div class="text-import-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Ввод количеств списком</h2>
+      <button id="textImportClose" class="close-modal" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div class="text-import-body">
+      <div class="text-import-hint">
+        Вставь товары построчно — название и количество через пробел. Например:<br>
+        <b>специй 50</b><br>
+        <b>дрожи 14</b><br>
+        <b>амиак 15</b><br>
+        Можно писать сокращённые названия и небольшие опечатки — сайт попробует подобрать товар.
+      </div>
+      <textarea id="textImportArea" class="text-import-area" placeholder="специй 50&#10;дрожи 14&#10;клей 14&#10;амиак 15&#10;гипс 543&#10;полутух 143"></textarea>
+      <div id="textImportPreview" class="text-import-preview">Вставь список, чтобы увидеть найденные товары.</div>
+      <div class="text-import-actions">
+        <button id="textImportCancel" class="footer-button" type="button">Отмена</button>
+        <button id="textImportApply" class="footer-button apply" type="button" disabled>✓ Ввести количества</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- AI MODAL -->
@@ -2246,6 +2357,175 @@ overlay.addEventListener("click", event => {
 document
   .getElementById("search")
   .addEventListener("input", renderAll);
+
+
+/* TEXT QUANTITY IMPORT */
+const textImportModal = document.getElementById("textImportModal");
+const textImportArea = document.getElementById("textImportArea");
+const textImportPreview = document.getElementById("textImportPreview");
+const textImportApply = document.getElementById("textImportApply");
+
+function openTextImport() {
+  textImportModal.classList.add("open");
+  textImportArea.focus();
+  updateTextImportPreview();
+}
+function closeTextImport() {
+  textImportModal.classList.remove("open");
+}
+document.getElementById("textImportOpen").addEventListener("click", openTextImport);
+document.getElementById("textImportClose").addEventListener("click", closeTextImport);
+document.getElementById("textImportCancel").addEventListener("click", closeTextImport);
+textImportModal.addEventListener("click", event => {
+  if (event.target === textImportModal) closeTextImport();
+});
+textImportArea.addEventListener("input", updateTextImportPreview);
+
+function simpleName(value) {
+  return String(value || "")
+    .toLocaleLowerCase("ru-RU")
+    .replace(/ё/g, "е")
+    .replace(/[^а-яa-z0-9]+/gi, "");
+}
+
+function editDistanceAtMostOne(a, b) {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    edits++;
+    if (edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else { i++; j++; }
+  }
+  if (i < a.length || j < b.length) edits++;
+  return edits <= 1;
+}
+
+function allProducts() {
+  const result = [];
+  for (const sellerId of Object.keys(SELLER_ITEMS)) {
+    for (const name of SELLER_ITEMS[sellerId]) {
+      if (!result.some(item => item.name === name)) result.push({sellerId, name});
+    }
+  }
+  return result;
+}
+
+function matchTextProduct(rawName) {
+  const input = simpleName(rawName);
+  if (!input) return null;
+
+  const aliases = {
+    "специй": "Набор специй",
+    "наборспеций": "Набор специй",
+    "дрожи": "Дрожжи",
+    "амиак": "Аммиак",
+    "аммиак": "Аммиак",
+    "полутух": "Полутухлая рыба",
+    "полутухлая": "Полутухлая рыба",
+    "пшеном": "Банка с пшеном",
+    "макаронами": "Банка с макаронами"
+  };
+  if (aliases[input]) {
+    const aliasTarget = aliases[input];
+    const foundAlias = allProducts().find(item => item.name === aliasTarget);
+    if (foundAlias) return foundAlias;
+  }
+
+  const products = allProducts();
+  const exact = products.find(item => simpleName(item.name) === input);
+  if (exact) return exact;
+
+  const prefixMatches = products.filter(item => {
+    const full = simpleName(item.name);
+    return input.length >= 4 && (full.startsWith(input) || full.split("").join("").includes(input));
+  });
+  if (prefixMatches.length === 1) return prefixMatches[0];
+
+  const wordMatches = products.filter(item => {
+    const words = item.name.toLocaleLowerCase("ru-RU").replace(/ё/g, "е").split(/[^а-яa-z0-9]+/i).filter(Boolean);
+    return words.some(word => {
+      const normalized = simpleName(word);
+      return input.length >= 4 && editDistanceAtMostOne(input, normalized);
+    });
+  });
+  if (wordMatches.length === 1) return wordMatches[0];
+
+  return null;
+}
+
+function parseTextImport() {
+  const parsed = [];
+  const unmatched = [];
+  const lines = textImportArea.value.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const match = line.match(/^(.*?)[\s:=;—-]+([0-9][0-9\s.,]*)\s*$/);
+    if (!match) {
+      unmatched.push(line);
+      continue;
+    }
+    const rawName = match[1].trim();
+    const quantityText = match[2].replace(/[\s.,]/g, "");
+    const quantity = Number(quantityText);
+    if (!rawName || !Number.isFinite(quantity) || quantity < 0) {
+      unmatched.push(line);
+      continue;
+    }
+    const product = matchTextProduct(rawName);
+    if (!product) {
+      unmatched.push(line);
+      continue;
+    }
+    const existing = parsed.find(item => item.name === product.name);
+    if (existing) existing.quantity = quantity;
+    else parsed.push({sellerId: product.sellerId, name: product.name, quantity});
+  }
+  return {parsed, unmatched};
+}
+
+function updateTextImportPreview() {
+  const {parsed, unmatched} = parseTextImport();
+  textImportPreview.innerHTML = "";
+  if (!textImportArea.value.trim()) {
+    textImportPreview.textContent = "Вставь список, чтобы увидеть найденные товары.";
+    textImportApply.disabled = true;
+    return;
+  }
+  const matchedTitle = document.createElement("strong");
+  matchedTitle.textContent = "Найдено: " + parsed.length;
+  textImportPreview.appendChild(matchedTitle);
+  if (parsed.length) {
+    const list = document.createElement("div");
+    list.textContent = parsed.map(item => item.name + " — " + item.quantity).join(" • ");
+    textImportPreview.appendChild(list);
+  }
+  if (unmatched.length) {
+    const missed = document.createElement("div");
+    missed.className = "unmatched";
+    missed.textContent = "Не распознано: " + unmatched.join(" • ");
+    textImportPreview.appendChild(missed);
+  }
+  textImportApply.disabled = parsed.length === 0;
+}
+
+textImportApply.addEventListener("click", () => {
+  const {parsed} = parseTextImport();
+  if (!parsed.length) return;
+  for (const item of parsed) {
+    setQuantity(item.sellerId, item.name, item.quantity);
+  }
+  saveQuantities();
+  renderAll();
+  closeTextImport();
+  showToast("Количество введено для товаров: " + parsed.length);
+});
+
+/* END TEXT QUANTITY IMPORT */
 
 /* AI MODAL */
 
