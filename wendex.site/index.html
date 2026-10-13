@@ -777,6 +777,33 @@ button{
   font-weight:900;
 }
 
+.history-payment{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:10px;
+  padding:9px 11px;
+  border:1px solid rgba(131,220,230,.2);
+  border-radius:10px;
+  background:rgba(131,220,230,.045);
+  color:#e8e0f5;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+}
+.history-payment input{
+  width:18px;
+  height:18px;
+  margin:0;
+  accent-color:var(--cyan);
+  flex:0 0 auto;
+}
+.history-payment.is-paid{
+  color:#8ef0c1;
+  border-color:rgba(105,230,166,.35);
+  background:rgba(105,230,166,.07);
+}
+
 .history-products{
   margin-top:8px;
   color:#c7ced5;
@@ -2367,6 +2394,27 @@ function renderHistory() {
     total.className = "history-total";
     total.textContent = formatMoney(entry.total);
 
+    const paymentLabel = document.createElement("label");
+    paymentLabel.className = "history-payment" + (entry.paymentReceived ? " is-paid" : "");
+
+    const paymentCheckbox = document.createElement("input");
+    paymentCheckbox.type = "checkbox";
+    paymentCheckbox.checked = Boolean(entry.paymentReceived);
+    paymentCheckbox.setAttribute("aria-label", "Деньги получены");
+
+    const paymentText = document.createElement("span");
+    paymentText.textContent = entry.paymentReceived ? "✓ Деньги получены" : "Деньги ещё не получены";
+
+    paymentCheckbox.addEventListener("change", () => {
+      entry.paymentReceived = paymentCheckbox.checked;
+      saveHistory();
+      paymentLabel.classList.toggle("is-paid", entry.paymentReceived);
+      paymentText.textContent = entry.paymentReceived ? "✓ Деньги получены" : "Деньги ещё не получены";
+    });
+
+    paymentLabel.appendChild(paymentCheckbox);
+    paymentLabel.appendChild(paymentText);
+
     const productsBox = document.createElement("div");
     productsBox.className = "history-products";
 
@@ -2408,6 +2456,7 @@ function renderHistory() {
 
     item.appendChild(top);
     item.appendChild(total);
+    item.appendChild(paymentLabel);
     item.appendChild(productsBox);
     item.appendChild(actions);
 
