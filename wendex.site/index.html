@@ -3131,12 +3131,12 @@ async function recognizeCurrentImage() {
     // API-ключи Gemini должны состоять из ASCII-символов.
     // Убираем пробелы/переносы и невидимые символы, которые могут попасть при копировании.
     const apiKey = geminiApiKey.value
-      .replace(/[\\s\\u200B-\\u200D\\uFEFF]/g, "")
+      .replace(/[\s\u200B-\u200D\uFEFF]/g, "")
       .trim();
     if (!apiKey) {
       throw new Error("Вставь Google Gemini API-ключ в поле выше.");
     }
-    if (/[^\\x21-\\x7E]/.test(apiKey)) {
+    if (/[^\x21-\x7E]/.test(apiKey)) {
       throw new Error("В API-ключе есть недопустимые символы. Скопируй ключ заново из Google AI Studio без кавычек и пробелов.");
     }
 
