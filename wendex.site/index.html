@@ -2652,6 +2652,22 @@ function renderHistory() {
       const copyReport = document.createElement("button");
       copyReport.type = "button";
       copyReport.textContent = "📋 Копировать изображение";
+      copyReport.style.display = "block";
+      copyReport.style.width = "100%";
+      copyReport.style.maxWidth = "620px";
+      copyReport.style.boxSizing = "border-box";
+      copyReport.style.minHeight = "30px";
+      copyReport.style.height = "30px";
+      copyReport.style.marginTop = "8px";
+      copyReport.style.padding = "4px 12px";
+      copyReport.style.border = "1px solid rgba(131,220,230,.45)";
+      copyReport.style.borderRadius = "8px";
+      copyReport.style.background = "linear-gradient(135deg, rgba(131,220,230,.12), rgba(199,177,239,.12))";
+      copyReport.style.color = "#c7f4f7";
+      copyReport.style.fontSize = "12px";
+      copyReport.style.fontWeight = "700";
+      copyReport.style.lineHeight = "20px";
+      copyReport.style.cursor = "pointer";
       copyReport.addEventListener("click", async () => {
         try {
           if (!navigator.clipboard || !window.ClipboardItem) {
@@ -2679,19 +2695,6 @@ function renderHistory() {
         }
       });
       reportWrap.appendChild(copyReport);
-
-      const downloadReport = document.createElement("button");
-      downloadReport.type = "button";
-      downloadReport.textContent = "⬇ Скачать отчёт";
-      downloadReport.addEventListener("click", () => {
-        const link = document.createElement("a");
-        link.href = entry.reportImage;
-        link.download = "otchet-" + String(entry.sellerName).replace(/[^a-zа-яё0-9_-]+/gi, "-") + ".jpg";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      });
-      reportWrap.appendChild(downloadReport);
       item.appendChild(reportWrap);
     } else if (entry.items?.length) {
       const noReport = document.createElement("div");
