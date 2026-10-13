@@ -178,10 +178,70 @@ button{
 }
 
 .columns{
+  display:block;
+}
+
+.store-layout{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(min(410px,100%),1fr));
+  grid-template-columns:minmax(210px,270px) minmax(0,1fr);
   gap:20px;
   align-items:start;
+}
+
+.store-nav{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+}
+
+.store-nav-button{
+  width:100%;
+  min-height:62px;
+  padding:13px 15px;
+  border:1px solid rgba(131,220,230,.22);
+  border-radius:15px;
+  background:linear-gradient(145deg,#171020,#100b17);
+  color:#dfe8ec;
+  text-align:left;
+  font-family:"Exo 2",sans-serif;
+  font-size:15px;
+  font-weight:900;
+  overflow-wrap:anywhere;
+  transition:border-color .15s ease,background .15s ease,transform .15s ease;
+}
+
+.store-nav-button:hover{
+  border-color:rgba(131,220,230,.55);
+  transform:translateX(2px);
+}
+
+.store-nav-button.active{
+  border-color:var(--cyan);
+  background:linear-gradient(145deg,rgba(127,93,186,.38),rgba(19,13,28,.98));
+  color:var(--cyan);
+  box-shadow:0 0 0 1px rgba(131,220,230,.08),0 8px 22px rgba(0,0,0,.2);
+}
+
+.store-nav-count{
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  font-family:"Cairo",sans-serif;
+  font-size:12px;
+  font-weight:800;
+}
+
+.store-content{
+  min-width:0;
+}
+
+.store-content > .seller{
+  width:100%;
+}
+
+.store-content .seller-body{
+  grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));
 }
 
 .seller{
@@ -965,9 +1025,21 @@ button{
   grid-column:1 / -1;
 }
 
-@media(max-width:1150px){
-  .columns{
+@media(max-width:800px){
+  .store-layout{
     grid-template-columns:1fr;
+    gap:14px;
+  }
+
+  .store-nav{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));
+    gap:9px;
+  }
+
+  .store-nav-button{
+    min-height:54px;
+    padding:10px 12px;
   }
 }
 
@@ -1608,25 +1680,68 @@ function matchesSearch(name) {
   return !q || name.toLowerCase().includes(q);
 }
 
+let activeSellerId = Object.keys(SELLERS)[0];
+
 function renderAll() {
   const container = document.getElementById("columns");
   container.innerHTML = "";
 
-  for (const sellerId of Object.keys(SELLERS)) {
-    container.appendChild(renderSeller(sellerId));
+  const sellerIds = Object.keys(SELLERS);
+  const search = document.getElementById("search").value.trim().toLowerCase();
+  const matchingSellerIds = sellerIds.filter(sellerId =>
+    SELLER_ITEMS[sellerId].some(productName =>
+      productName.toLowerCase().includes(search)
+    )
+  );
+
+  if (!matchingSellerIds.includes(activeSellerId)) {
+    activeSellerId = matchingSellerIds[0] || sellerIds[0];
   }
 
+  const layout = document.createElement("div");
+  layout.className = "store-layout";
+
+  const nav = document.createElement("nav");
+  nav.className = "store-nav";
+  nav.setAttribute("aria-label", "Магазины");
+
+  for (const sellerId of sellerIds) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "store-nav-button";
+    button.classList.toggle("active", sellerId === activeSellerId);
+    button.setAttribute("aria-pressed", String(sellerId === activeSellerId));
+    button.textContent = SELLERS[sellerId].name;
+
+    const count = document.createElement("span");
+    count.className = "store-nav-count";
+    const matchingCount = SELLER_ITEMS[sellerId].filter(matchesSearch).length;
+    count.textContent = search
+      ? matchingCount + (matchingCount === 1 ? " совпадение" : " совпадений")
+      : SELLER_ITEMS[sellerId].length + (SELLER_ITEMS[sellerId].length === 1 ? " товар" : " товаров");
+    button.appendChild(count);
+
+    button.addEventListener("click", () => {
+      activeSellerId = sellerId;
+      renderAll();
+    });
+
+    nav.appendChild(button);
+  }
+
+  const content = document.createElement("div");
+  content.className = "store-content";
+  content.appendChild(renderSeller(activeSellerId));
+
+  layout.appendChild(nav);
+  layout.appendChild(content);
+  container.appendChild(layout);
 }
 
-/* Каждая колонка раскрывается независимо */
+/* Карточка выбранного магазина */
 function renderSeller(sellerId) {
   const seller = document.createElement("section");
   seller.className = "seller";
-
-  seller.classList.toggle(
-    "collapsed",
-    sellerCollapsed[sellerId]
-  );
 
   const header = document.createElement("div");
   header.className = "seller-header";
@@ -1644,22 +1759,8 @@ function renderSeller(sellerId) {
     "Свернуть или раскрыть: " + SELLERS[sellerId].name
   );
 
-  function toggleSeller() {
-    sellerCollapsed[sellerId] = !sellerCollapsed[sellerId];
-
-    seller.classList.toggle(
-      "collapsed",
-      sellerCollapsed[sellerId]
-    );
-
-    title.setAttribute(
-      "aria-expanded",
-      String(!sellerCollapsed[sellerId])
-    );
-    body.inert = sellerCollapsed[sellerId];
-  }
-
-  title.addEventListener("click", toggleSeller);
+  title.setAttribute("aria-expanded", "true");
+  title.setAttribute("aria-label", "Выбранный магазин: " + SELLERS[sellerId].name);
 
   const soldButton = document.createElement("button");
   soldButton.type = "button";
@@ -1675,7 +1776,7 @@ function renderSeller(sellerId) {
 
   const body = document.createElement("div");
   body.className = "seller-body";
-  body.inert = sellerCollapsed[sellerId];
+  body.inert = false;
 
   const visibleProducts = SELLER_ITEMS[sellerId].filter(matchesSearch);
 
