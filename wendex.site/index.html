@@ -1104,13 +1104,18 @@ const SELLERS = {
   Farma: {
     name: "Farma",
     column: 10
+  },
+  PamperShop: {
+    name: "Торговка Памперсы",
+    column: 12
   }
 };
 
 /* По умолчанию все продавцы свёрнуты */
 const sellerCollapsed = {
   WhiteFox: true,
-  Farma: true
+  Farma: true,
+  PamperShop: true
 };
 
 const ICONS = {
@@ -1162,6 +1167,9 @@ const SELLER_ITEMS = {
   Farma: [
     "Кофе",
     "Железо"
+  ],
+  PamperShop: [
+    "Чеснок"
   ]
 };
 
@@ -1437,6 +1445,7 @@ async function loadPrices() {
 
     prices[makeQuantityKey("Farma", "Кофе")] = 480;
     prices[makeQuantityKey("Farma", "Железо")] = 570;
+    prices[makeQuantityKey("PamperShop", "Чеснок")] = 350;
 
     renderAll();
 
@@ -1468,7 +1477,8 @@ async function loadPrices() {
       [makeQuantityKey("WhiteFox","Гипс")]:90,
       [makeQuantityKey("WhiteFox","Аммиак")]:13000,
       [makeQuantityKey("Farma","Кофе")]:480,
-      [makeQuantityKey("Farma","Железо")]:570
+      [makeQuantityKey("Farma","Железо")]:570,
+      [makeQuantityKey("PamperShop","Чеснок")]:350
     };
 
     renderAll();
