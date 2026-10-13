@@ -1097,14 +1097,6 @@ const API_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8w3Uu6FZ6PFxGP0ZwxPimjVLURIh0pBrYlrdJEP23sUNJU6IRkvBcHHvPTXf3f8bsnO6DLZN3EjEr/pub?output=csv";
 
 const SELLERS = {
-  Logovo: {
-    name: "Логово Хайзенберга",
-    column: 0
-  },
-  Staraptor: {
-    name: "Staraptor",
-    column: 4
-  },
   WhiteFox: {
     name: "Сеня",
     column: 8
@@ -1113,8 +1105,6 @@ const SELLERS = {
 
 /* По умолчанию все продавцы свёрнуты */
 const sellerCollapsed = {
-  Logovo: true,
-  Staraptor: true,
   WhiteFox: true
 };
 
@@ -1140,23 +1130,6 @@ const ICONS = {
 };
 
 const SELLER_ITEMS = {
-  Logovo: [
-    "Кофе",
-    "Помидор",
-    "Молоко",
-    "Гипс",
-    "Железо",
-    "Реагенты",
-    "Аммиак",
-    "Остатки приборов шепота",
-    "Отличная тушенка"
-  ],
-  Staraptor: [
-    "Газовый баллон",
-    "Перчатки",
-    "Чеснок",
-    "Поташ"
-  ],
   WhiteFox: [
     "Помидор",
     "Гнилые доски",
@@ -1184,36 +1157,28 @@ const SELLER_ITEMS = {
 };
 
 const ALLOWED_AI_ITEMS = [
-  "Кофе",
   "Помидор",
-  "Молоко",
-  "Гипс",
-  "Железо",
-  "Реагенты",
-  "Аммиак",
-  "Остатки приборов шепота",
-  "Отличная тушенка",
-  "Газовый баллон",
-  "Перчатки",
-  "Чеснок",
-  "Поташ",
-  "Мясо шавки",
-  "Мясо кабана",
-  "Мясо хрюши",
   "Гнилые доски",
   "Колбасная нарезка",
+  "Поташ",
+  "Перчатки",
   "Борная кислота",
   "Раствор йода",
   "Кислота",
   "Щепки",
   "Банка с макаронами",
+  "Реагенты",
   "Асбест",
+  "Молоко",
   "Кастрюля",
   "Сковорода",
   "Полутухлая рыба",
   "Красная икра",
   "Ткань",
-  "Технический спирт"
+  "Отличная тушенка",
+  "Технический спирт",
+  "Гипс",
+  "Аммиак"
 ];
 
 const STORAGE_QUANTITIES = "burmalda_quantities_v3";
@@ -1414,16 +1379,6 @@ async function loadPrices() {
 
     const sellerConfigs = [
       {
-        id: "Logovo",
-        nameColumn: 0,
-        priceColumn: 1
-      },
-      {
-        id: "Staraptor",
-        nameColumn: 4,
-        priceColumn: 5
-      },
-      {
         id: "WhiteFox",
         nameColumn: 8,
         priceColumn: 9
@@ -1483,21 +1438,6 @@ async function loadPrices() {
     console.error(error);
 
     prices = {
-      [makeQuantityKey("Logovo","Кофе")]:700,
-      [makeQuantityKey("Logovo","Помидор")]:1600,
-      [makeQuantityKey("Logovo","Молоко")]:70,
-      [makeQuantityKey("Logovo","Гипс")]:100,
-      [makeQuantityKey("Logovo","Железо")]:590,
-      [makeQuantityKey("Logovo","Реагенты")]:600,
-      [makeQuantityKey("Logovo","Аммиак")]:12700,
-      [makeQuantityKey("Logovo","Остатки приборов шепота")]:24500,
-      [makeQuantityKey("Logovo","Отличная тушенка")]:1100,
-
-      [makeQuantityKey("Staraptor","Газовый баллон")]:5730,
-      [makeQuantityKey("Staraptor","Перчатки")]:500,
-      [makeQuantityKey("Staraptor","Чеснок")]:500,
-      [makeQuantityKey("Staraptor","Поташ")]:500,
-
       [makeQuantityKey("WhiteFox","Помидор")]:1500,
       [makeQuantityKey("WhiteFox","Гнилые доски")]:800,
       [makeQuantityKey("WhiteFox","Колбасная нарезка")]:1100,
@@ -1562,7 +1502,7 @@ function renderAll() {
   const container = document.getElementById("columns");
   container.innerHTML = "";
 
-  for (const sellerId of ["Logovo", "Staraptor", "WhiteFox"]) {
+  for (const sellerId of Object.keys(SELLERS)) {
     container.appendChild(renderSeller(sellerId));
   }
 
@@ -1782,9 +1722,7 @@ function updateProductVisual(card, sum, sellerId, productName) {
 
 function updateSellerAndGlobalTotals() {
   const sellers = document.getElementById("columns").children;
-  const sellerIds = ["Logovo", "Staraptor", "WhiteFox"];
-
-  sellerIds.forEach((sellerId, index) => {
+  Object.keys(SELLERS).forEach((sellerId, index) => {
     const totalValue = sellers[index]?.querySelector(".seller-total-value");
 
     if (totalValue) {
