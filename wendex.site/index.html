@@ -2471,9 +2471,23 @@ function downloadSaleReport(entry) {
 
   let reportImage;
   try {
+    // Запускаем копирование в момент клика по «Продал», пока браузер разрешает запись в буфер обмена.
+    if (navigator.clipboard && window.ClipboardItem) {
+      const pngBlobPromise = new Promise(resolve => {
+        canvas.toBlob(resolve, "image/png");
+      });
+      navigator.clipboard.write([
+        new ClipboardItem({ "image/png": pngBlobPromise })
+      ]).then(() => {
+        showToast("Отчёт скопирован в буфер обмена и сохранён в истории");
+      }).catch(() => {
+        showToast("Отчёт сохранён в истории, но браузер не разрешил копирование в буфер обмена");
+      });
+    } else {
+      showToast("Отчёт сохранён в истории. Для копирования нужен HTTPS и поддержка буфера обмена");
+    }
     // Храним сжатое изображение прямо в записи истории, чтобы оно оставалось после перезагрузки.
     reportImage = canvas.toDataURL("image/jpeg", 0.78);
-    showToast("Отчёт прикреплён к истории продаж");
   } catch (error) {
     showToast("Не удалось создать изображение отчёта");
   }
@@ -2643,25 +2657,21 @@ function renderHistory() {
           if (!navigator.clipboard || !window.ClipboardItem) {
             throw new Error("Clipboard image API unavailable");
           }
-          const response = await fetch(entry.reportImage);
-          const blob = await response.blob();
-          const imageBlob = blob.type === "image/png"
-            ? blob
-            : await new Promise(resolve => {
-                const image = new Image();
-                image.onload = () => {
-                  const canvas = document.createElement("canvas");
-                  canvas.width = image.naturalWidth;
-                  canvas.height = image.naturalHeight;
-                  canvas.getContext("2d").drawImage(image, 0, 0);
-                  canvas.toBlob(resolve, "image/png");
-                };
-                image.onerror = () => resolve(null);
-                image.src = entry.reportImage;
-              });
-          if (!imageBlob) throw new Error("Image conversion failed");
+          const image = new Image();
+          image.src = entry.reportImage;
+          await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = reject;
+          });
+          const canvas = document.createElement("canvas");
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          canvas.getContext("2d").drawImage(image, 0, 0);
+          const imageBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Image conversion failed")), "image/png");
+          });
           await navigator.clipboard.write([
-            new ClipboardItem({ [imageBlob.type || "image/png"]: imageBlob })
+            new ClipboardItem({ "image/png": imageBlob })
           ]);
           showToast("Изображение отчёта скопировано в буфер обмена");
         } catch (error) {
