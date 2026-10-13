@@ -1162,11 +1162,45 @@ button{
   }
 }
 
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+}
+.brand-wrap{
+  flex:1 1 auto;
+}
 .brand-title-row{
   display:flex;
   align-items:center;
   gap:14px;
   flex-wrap:wrap;
+}
+#textImportOpen{
+  margin-left:auto;
+}
+@media(min-width:651px){
+  .topbar .brand-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    width:100%;
+  }
+  .topbar .brand-title-row{
+    display:contents;
+  }
+  .topbar .brand{
+    margin:0;
+  }
+  .topbar .subtitle{
+    margin-left:0;
+    text-align:center;
+  }
+  .topbar #textImportOpen{
+    margin-left:auto;
+  }
 }
 .text-import-open{
   min-height:40px;
