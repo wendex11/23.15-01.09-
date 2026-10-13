@@ -1600,7 +1600,9 @@ const ICONS = {
   "Набор специй": "https://cdn.discordapp.com/attachments/1479840737410551980/1479840737817395342/item.png?ex=6ace3916&is=6acce796&hm=c5175250a28aa00e62bf776796ed991f98a2b4d861a4d6272054c6d800a52bc2&",
   "Дрожжи": "https://cdn.discordapp.com/attachments/1480320049905537116/1480320050404528261/item.png?ex=6acea5fb&is=6acd547b&hm=f2af8f59d24bc886cac49846fb657a0b3e0f878f33ba9b52832add7012804651&",
   "Клей": "https://cdn.discordapp.com/attachments/1554512040846950431/1554512041010798762/item.png?ex=6ace4b28&is=6accf9a8&hm=b00ac09b8c6c3ce9af67dc91042740f27bd0075c85611427dc81ae5e8602a9dd&",
-  "Банка с пшеном": "https://cdn.discordapp.com/attachments/1480896761055809700/1480896761508790422/item.png?ex=6acec4d5&is=6acd7355&hm=98aef3bb3db2ae211286833bd1254f4cbfb3a733eafc50046305aec25c32df94&"
+  "Банка с пшеном": "https://cdn.discordapp.com/attachments/1480896761055809700/1480896761508790422/item.png?ex=6acec4d5&is=6acd7355&hm=98aef3bb3db2ae211286833bd1254f4cbfb3a733eafc50046305aec25c32df94&",
+  "Банка с фасолью": "https://cdn.discordapp.com/attachments/1482377318956662820/1482377319535345724/item.png?ex=6ace38f6&is=6acce776&hm=2874b7a44b949ce53e52ee9939229826d6f294aac9d63d1cef962b0cae0f2574&",
+  "Банка с горохом": "https://cdn.discordapp.com/attachments/1482377161456226335/1482377161976582194/item.png?ex=6ace38d0&is=6acce750&hm=c132626797dbaa7cdd06c8a81d40f42c047bd5e6e6e53336481db7460cbbff7f&"
 };
 
 const SELLER_ITEMS = {
@@ -1644,7 +1646,9 @@ const SELLER_ITEMS = {
   pers1st: [
     "Дрожжи",
     "Борная кислота",
-    "Раствор йода"
+    "Раствор йода",
+    "Банка с фасолью",
+    "Банка с горохом"
   ]
 };
 
@@ -1926,6 +1930,8 @@ async function loadPrices() {
     prices[makeQuantityKey("pers1st", "Дрожжи")] = 2500;
     prices[makeQuantityKey("pers1st", "Борная кислота")] = 1500;
     prices[makeQuantityKey("pers1st", "Раствор йода")] = 1000;
+    prices[makeQuantityKey("pers1st", "Банка с фасолью")] = 100;
+    prices[makeQuantityKey("pers1st", "Банка с горохом")] = 100;
 
     renderAll();
 
@@ -1963,7 +1969,9 @@ async function loadPrices() {
       [makeQuantityKey("Stalpoint","Банка с пшеном")]:2000,
       [makeQuantityKey("pers1st","Дрожжи")]:2500,
       [makeQuantityKey("pers1st","Борная кислота")]:1500,
-      [makeQuantityKey("pers1st","Раствор йода")]:1000
+      [makeQuantityKey("pers1st","Раствор йода")]:1000,
+      [makeQuantityKey("pers1st","Банка с фасолью")]:100,
+      [makeQuantityKey("pers1st","Банка с горохом")]:100
     };
 
     renderAll();
