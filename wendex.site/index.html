@@ -370,21 +370,31 @@ button{
 }
 
 .product-card .quantity-area{
-  grid-column:1;
+  grid-column:1 / -1;
   grid-row:2;
+  width:calc(50% - 5px);
+  min-width:0;
+  justify-content:stretch;
+  justify-self:start;
+}
+
+.product-card .quantity-input{
   width:100%;
   min-width:0;
-  justify-content:flex-start;
+  max-width:100%;
+  box-sizing:border-box;
 }
 
 .product-card .sum-area{
-  grid-column:2;
+  grid-column:1 / -1;
   grid-row:2;
-  width:100%;
+  width:calc(50% - 5px);
   min-width:0;
-  justify-content:flex-end;
+  justify-content:center;
+  justify-self:end;
   border-radius:9px;
   padding:7px 5px;
+  box-sizing:border-box;
   background:rgba(127,93,186,.10);
 }
 
