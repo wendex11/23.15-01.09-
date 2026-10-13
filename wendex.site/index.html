@@ -1100,12 +1100,17 @@ const SELLERS = {
   WhiteFox: {
     name: "WhiteFox__",
     column: 8
+  },
+  Farma: {
+    name: "Farma",
+    column: 10
   }
 };
 
 /* По умолчанию все продавцы свёрнуты */
 const sellerCollapsed = {
-  WhiteFox: true
+  WhiteFox: true,
+  Farma: true
 };
 
 const ICONS = {
@@ -1153,6 +1158,10 @@ const SELLER_ITEMS = {
     "Технический спирт",
     "Гипс",
     "Аммиак"
+  ],
+  Farma: [
+    "Кофе",
+    "Железо"
   ]
 };
 
@@ -1426,6 +1435,9 @@ async function loadPrices() {
       prices[makeQuantityKey("WhiteFox", productName)] = price;
     }
 
+    prices[makeQuantityKey("Farma", "Кофе")] = 480;
+    prices[makeQuantityKey("Farma", "Железо")] = 570;
+
     renderAll();
 
     status.textContent = "Цены загружены";
@@ -1454,7 +1466,9 @@ async function loadPrices() {
       [makeQuantityKey("WhiteFox","Отличная тушенка")]:1700,
       [makeQuantityKey("WhiteFox","Технический спирт")]:750,
       [makeQuantityKey("WhiteFox","Гипс")]:90,
-      [makeQuantityKey("WhiteFox","Аммиак")]:13000
+      [makeQuantityKey("WhiteFox","Аммиак")]:13000,
+      [makeQuantityKey("Farma","Кофе")]:480,
+      [makeQuantityKey("Farma","Железо")]:570
     };
 
     renderAll();
