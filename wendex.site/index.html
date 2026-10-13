@@ -2598,6 +2598,10 @@ document.addEventListener("keydown", event => {
       closeAiModalWindow();
     }
 
+    if (textImportModal.classList.contains("open")) {
+      closeTextImport();
+    }
+
     if (overlay.classList.contains("open")) {
       closeMenu();
     }
