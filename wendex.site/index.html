@@ -2373,6 +2373,120 @@ function updateSellerAndGlobalTotals() {
   });
 }
 
+function downloadSaleReport(entry) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const width = 1000;
+  const pad = 54;
+  const rowHeight = 54;
+  const headerHeight = 270;
+  const footerHeight = 125;
+  const items = entry.items || [];
+  const height = headerHeight + Math.max(items.length, 1) * rowHeight + footerHeight;
+  canvas.width = width;
+  canvas.height = height;
+
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#100b18");
+  gradient.addColorStop(1, "#211431");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.strokeStyle = "#83dce6";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(18, 18, width - 36, height - 36);
+
+  ctx.fillStyle = "#83dce6";
+  ctx.font = "900 38px Arial, sans-serif";
+  ctx.fillText("ОТЧЁТ О ПРОДАЖЕ", pad, 78);
+
+  ctx.fillStyle = "#f3f8fa";
+  ctx.font = "900 30px Arial, sans-serif";
+  ctx.fillText(entry.sellerName, pad, 130);
+
+  const date = new Date(entry.date);
+  const dateText = date.toLocaleDateString("ru-RU") + " • " +
+    date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  ctx.fillStyle = "#a7adb8";
+  ctx.font = "600 22px Arial, sans-serif";
+  ctx.fillText("Дата и время: " + dateText, pad, 174);
+
+  ctx.fillStyle = "#c7b1ef";
+  ctx.font = "900 21px Arial, sans-serif";
+  ctx.fillText("ТОВАР", pad, 230);
+  ctx.textAlign = "right";
+  ctx.fillText("КОЛ-ВО", 660, 230);
+  ctx.fillText("ЦЕНА / ШТ.", 805, 230);
+  ctx.fillText("СУММА", width - pad, 230);
+  ctx.textAlign = "left";
+
+  ctx.strokeStyle = "rgba(131,220,230,.45)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pad, 245);
+  ctx.lineTo(width - pad, 245);
+  ctx.stroke();
+
+  if (!items.length) {
+    ctx.fillStyle = "#a7adb8";
+    ctx.font = "600 23px Arial, sans-serif";
+    ctx.fillText("Товары не указаны (нулевое количество)", pad, headerHeight + 20);
+  } else {
+    items.forEach((item, index) => {
+      const y = headerHeight + index * rowHeight;
+      if (index % 2 === 0) {
+        ctx.fillStyle = "rgba(255,255,255,.035)";
+        ctx.fillRect(pad - 10, y - 30, width - pad * 2 + 20, rowHeight);
+      }
+      ctx.fillStyle = "#f3f8fa";
+      ctx.font = "700 19px Arial, sans-serif";
+      let name = item.name;
+      while (ctx.measureText(name).width > 390 && name.length > 4) name = name.slice(0, -2) + "…";
+      ctx.fillText(name, pad, y);
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#83dce6";
+      ctx.fillText(String(item.quantity), 660, y);
+      ctx.fillStyle = "#c7b1ef";
+      ctx.fillText(formatMoney(item.price), 805, y);
+      ctx.fillStyle = "#f3f8fa";
+      ctx.fillText(formatMoney(item.sum), width - pad, y);
+      ctx.textAlign = "left";
+    });
+  }
+
+  const totalY = headerHeight + Math.max(items.length, 1) * rowHeight + 35;
+  ctx.strokeStyle = "#83dce6";
+  ctx.beginPath();
+  ctx.moveTo(pad, totalY - 30);
+  ctx.lineTo(width - pad, totalY - 30);
+  ctx.stroke();
+  ctx.fillStyle = "#a7adb8";
+  ctx.font = "900 26px Arial, sans-serif";
+  ctx.fillText("ИТОГО", pad, totalY + 12);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#83dce6";
+  ctx.font = "900 34px Arial, sans-serif";
+  ctx.fillText(formatMoney(entry.total), width - pad, totalY + 14);
+  ctx.textAlign = "left";
+
+  canvas.toBlob(blob => {
+    if (!blob) {
+      showToast("Не удалось создать изображение отчёта");
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "otchet-" + String(entry.sellerName).replace(/[^a-zа-яё0-9_-]+/gi, "-") + "-" +
+      date.toISOString().replace(/[:.]/g, "-") + ".png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    showToast("Отчёт о продаже сохранён как PNG");
+  }, "image/png");
+}
+
 function saveSale(sellerId, button) {
   const items = [];
 
@@ -2407,6 +2521,8 @@ function saveSale(sellerId, button) {
     total,
     items
   };
+
+  downloadSaleReport(entry);
 
   history.unshift(entry);
 
