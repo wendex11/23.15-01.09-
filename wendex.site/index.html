@@ -1356,6 +1356,55 @@ button{
   .text-import-area{min-height:180px;}
 }
 
+
+/* Небольшое увеличение элементов интерфейса */
+.seller-header{padding:18px 20px;gap:14px}
+.seller-name{font-size:clamp(20px,2.1vw,26px)}
+.seller-contact-info{font-size:15px;gap:4px;line-height:1.55}
+.seller-body{padding:17px;gap:17px}
+.store-content .seller-body{grid-template-columns:repeat(auto-fill,minmax(min(235px,100%),1fr))}
+.product-card{padding:16px;gap:11px;grid-template-columns:60px minmax(0,1fr);border-radius:18px}
+.product-card .product-icon-wrap{width:58px;height:58px}
+.product-icon-wrap{width:56px;height:56px}
+.product-icon{width:48px;height:48px}
+.product-name{font-size:17px;line-height:1.15}
+.product-price{font-size:13px;margin-top:6px}
+.product-card .quantity-input{font-size:16px;padding:9px 5px}
+.product-card .sum-area{padding:9px 6px}
+.product-card .sum{font-size:15px}
+.quantity-input{font-size:16px;padding:8px 5px}
+.store-nav-button{min-height:66px;padding:15px 16px;font-size:16px}
+.store-nav-count{font-size:13px}
+.search{height:54px;font-size:17px}
+.top-button{min-height:49px;padding:0 18px;font-size:15px}
+.seller-clear-button,.sold-button{min-height:41px;font-size:14px}
+.seller-total{padding:17px 18px}
+.seller-total-label{font-size:15px}
+.seller-total-value{font-size:20px}
+.bottom-total{padding:20px 22px}
+.bottom-total-label{font-size:19px}
+.bottom-total-value{font-size:27px}
+.history-item{padding:15px}
+.history-total{font-size:19px}
+.history-payment{font-size:15px;padding:10px 12px}
+@media(max-width:600px){
+  body{padding:14px}
+  .seller-header{padding:14px;gap:8px}
+  .seller-name{font-size:19px}
+  .seller-contact-info{font-size:14px}
+  .seller-body{padding:12px;gap:12px}
+  .store-content .seller-body{grid-template-columns:repeat(auto-fill,minmax(min(205px,100%),1fr))}
+  .product-card{padding:12px;grid-template-columns:54px minmax(0,1fr);gap:9px}
+  .product-card .product-icon-wrap{width:52px;height:52px}
+  .product-icon-wrap{width:50px;height:50px}
+  .product-icon{width:44px;height:44px}
+  .product-name{font-size:16px}
+  .product-price{font-size:12px}
+  .store-nav-button{font-size:15px}
+  .search{font-size:16px}
+  .bottom-total-value{font-size:23px}
+}
+
 </style>
 </head>
 
