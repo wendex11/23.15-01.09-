@@ -633,6 +633,22 @@ button{
   white-space:nowrap;
 }
 
+.seller-total-copy{
+  min-height:36px;
+  padding:0 11px;
+  border:1px solid rgba(131,220,230,.35);
+  border-radius:10px;
+  background:linear-gradient(180deg,#211431,#150d1e);
+  color:var(--cyan);
+  font-size:13px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.seller-total-copy:hover{border-color:var(--border-strong)}
+.seller-total-copy:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.seller-total-copy:disabled{opacity:.6;cursor:wait}
+
+
 .empty{
   padding:22px 10px;
   color:var(--muted);
@@ -2195,8 +2211,32 @@ function renderSeller(sellerId) {
     calculateSellerTotal(sellerId)
   );
 
+  const copyTotalButton = document.createElement("button");
+  copyTotalButton.type = "button";
+  copyTotalButton.className = "seller-total-copy";
+  copyTotalButton.textContent = "⧉ Копировать";
+  copyTotalButton.setAttribute("aria-label", "Копировать итоговую сумму");
+  copyTotalButton.addEventListener("click", async () => {
+    const amount = formatMoney(calculateSellerTotal(sellerId)).replace(/\s*₽$/, "");
+    try {
+      await navigator.clipboard.writeText(amount);
+      showToast("Итоговая сумма скопирована: " + amount);
+    } catch {
+      const fallback = document.createElement("textarea");
+      fallback.value = amount;
+      fallback.style.position = "fixed";
+      fallback.style.opacity = "0";
+      document.body.appendChild(fallback);
+      fallback.select();
+      const copied = document.execCommand("copy");
+      fallback.remove();
+      showToast(copied ? "Итоговая сумма скопирована: " + amount : "Не удалось скопировать сумму");
+    }
+  });
+
   totalBox.appendChild(totalLabel);
   totalBox.appendChild(totalValue);
+  totalBox.appendChild(copyTotalButton);
 
   body.appendChild(totalBox);
 
