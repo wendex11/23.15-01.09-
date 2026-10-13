@@ -2527,7 +2527,7 @@ function saveSale(sellerId, button) {
   history.unshift(entry);
 
   // Ограничиваем число сохранённых изображений, чтобы не переполнить localStorage.
-  history.slice(15).forEach(oldEntry => { delete oldEntry.reportImage; });
+  history.slice(30).forEach(oldEntry => { delete oldEntry.reportImage; });
 
   if (history.length > 200) {
     history = history.slice(0, 200);
