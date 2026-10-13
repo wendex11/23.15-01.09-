@@ -1,625 +1,296 @@
+const MODEL = "@cf/google/gemma-4-26b-a4b-it";
+
+const ALLOWED_ITEMS = [
+  "Кофе",
+  "Помидор",
+  "Молоко",
+  "Гипс",
+  "Железо",
+  "Реагенты",
+  "Аммиак",
+  "Остатки приборов шепота",
+  "Отличная тушенка",
+  "Газовый баллон",
+  "Перчатки",
+  "Чеснок",
+  "Поташ",
+  "Мясо шавки",
+  "Мясо кабана",
+  "Мясо хрюши"
+];
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data, null, 2), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
+function errorResponse(message, status = 500, details = null) {
+  return jsonResponse(
+    {
+      error: message,
+      ...(details ? { details: String(details) } : {})
+    },
+    status
+  );
+}
+
+function cleanRecognition(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  const merged = new Map();
+
+  for (const item of items) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const name = String(item.name || "").trim();
+
+    if (!ALLOWED_ITEMS.includes(name)) {
+      continue;
+    }
+
+    let quantity = Number(item.quantity);
+
+    if (!Number.isFinite(quantity)) {
+      continue;
+    }
+
+    quantity = Math.floor(quantity);
+
+    if (quantity <= 0) {
+      continue;
+    }
+
+    let confidence = Number(item.confidence);
+
+    if (!Number.isFinite(confidence)) {
+      confidence = 0;
+    }
+
+    confidence = Math.max(0, Math.min(1, confidence));
+
+    if (!merged.has(name)) {
+      merged.set(name, {
+        name,
+        quantity: 0,
+        confidence: 0
+      });
+    }
+
+    const current = merged.get(name);
+
+    current.quantity += quantity;
+    current.confidence = Math.max(
+      current.confidence,
+      confidence
+    );
+  }
+
+  return Array.from(merged.values());
+}
+
+function removeMarkdown(text) {
+  return String(text || "")
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+}
+
+async function recognizeImage(request, env) {
+  if (!env?.AI) {
+    return errorResponse(
+      "Workers AI binding AI не подключён.",
+      500
+    );
+  }
+
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return errorResponse(
+      "Некорректный JSON от сайта.",
+      400
+    );
+  }
+
+  const imageDataUrl = body?.image;
+
+  if (
+    typeof imageDataUrl !== "string" ||
+    !imageDataUrl.startsWith("data:image/")
+  ) {
+    return errorResponse(
+      "Изображение не передано.",
+      400
+    );
+  }
+
+  if (imageDataUrl.length > 12_000_000) {
+    return errorResponse(
+      "Изображение слишком большое.",
+      413
+    );
+  }
+
+  const prompt = `
+Ты распознаёшь инвентарь игры по изображению.
+
+Разрешённые предметы:
+
+${ALLOWED_ITEMS.map(x => "- " + x).join("\n")}
+
+ЗАДАЧА:
+
+1. Найди на скриншоте все предметы из списка.
+2. Для каждого определи количество.
+3. Если предмет встречается несколько раз, объедини количество.
+4. Игнорируй все остальные предметы.
+5. Не придумывай отсутствующие предметы.
+6. Не рассчитывай цену.
+7. Верни только JSON.
+
+Формат:
+
+{
+  "items": [
+    {
+      "name": "Кофе",
+      "quantity": 10,
+      "confidence": 0.95
+    }
+  ]
+}
+
+confidence — число от 0 до 1.
+`;
+
+  const messages = [
+    {
+      role: "system",
+      content: prompt
+    },
+    {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: "Распознай предметы на этом скриншоте."
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: imageDataUrl
+          }
+        }
+      ]
+    }
+  ];
+
+  let aiResult;
+
+  try {
+    aiResult = await env.AI.run(
+      MODEL,
+      {
+        messages,
+
+        /*
+         * Отключаем reasoning, чтобы модель
+         * возвращала именно полезный ответ.
+         */
+        chat_template_kwargs: {
+          enable_thinking: false
+        },
+
+        temperature: 0,
+
+        max_tokens: 1200,
+
+        response_format: {
+          type: "json_object"
+        }
+      }
+    );
+  } catch (error) {
+    console.error(
+      "Workers AI exception:",
+      error
+    );
+
+    return errorResponse(
+      "Ошибка при вызове Workers AI.",
+      502,
+      error?.message || String(error)
+    );
+  }
+
+  /*
+   * ДИАГНОСТИКА
+   *
+   * Пока НЕ пытаемся угадать,
+   * где Cloudflare положил текст.
+   *
+   * Возвращаем реальный ответ модели.
+   */
+  return jsonResponse({
+    debug: true,
+    model: MODEL,
+    raw: aiResult
+  });
+}
+
 export default {
-  async fetch(request, env, ctx) {
-    const html = `<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>БУРМАЛДа))0</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Exo+2:wght@700;800;900&family=Russo+One&display=swap" rel="stylesheet">
-
-<style>
-:root{
-  --purple:#7f5dba;
-  --purple-dark:#4e3974;
-  --purple-soft:#6c4fa0;
-  --cyan:#83dce6;
-  --cyan-soft:#64c6d0;
-  --bg:#09070d;
-  --panel:#100c18;
-  --card:#15101e;
-  --card2:#1a1425;
-  --border:rgba(131,220,230,.5);
-  --border-strong:rgba(131,220,230,.85);
-  --text:#f3f8fa;
-  --muted:#a7adb8;
-  --danger:#ef6d7a;
-  --success:#7ce2bd;
-  --shadow:0 0 0 1px rgba(127,93,186,.18),0 10px 35px rgba(0,0,0,.3);
-}
-
-*{
-  box-sizing:border-box;
-}
-
-html,body{
-  margin:0;
-  min-height:100%;
-  background:
-    radial-gradient(circle at 50% 0%,rgba(127,93,186,.13),transparent 30%),
-    linear-gradient(180deg,#09070d 0%,#0b0810 100%);
-  color:var(--text);
-}
-
-body{
-  font-family:"Cairo",sans-serif;
-  padding:24px;
-}
-
-button,
-input{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-.page{
-  width:min(1800px,100%);
-  margin:0 auto;
-}
-
-.topbar{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:20px;
-  margin-bottom:18px;
-}
-
-.brand-wrap{
-  padding-left:12px;
-}
-
-.brand{
-  margin:0;
-  font-family:"Russo One",sans-serif;
-  font-size:clamp(32px,4vw,52px);
-  line-height:1;
-  color:var(--cyan);
-  text-shadow:
-    0 0 8px rgba(131,220,230,.35),
-    0 0 28px rgba(131,220,230,.12);
-}
-
-.subtitle{
-  margin-top:8px;
-  color:var(--muted);
-  font-size:15px;
-  font-weight:800;
-}
-
-.top-actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.top-button{
-  min-height:46px;
-  padding:0 16px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  color:var(--cyan);
-  background:linear-gradient(180deg,#171021,#120d19);
-  box-shadow:var(--shadow);
-  font-weight:900;
-  transition:.15s ease;
-}
-
-.top-button:hover{
-  border-color:var(--border-strong);
-  transform:translateY(-1px);
-}
-
-.top-button.ai{
-  background:linear-gradient(180deg,#6e51a3,#4f3977);
-  color:white;
-  border-color:rgba(131,220,230,.65);
-}
-
-.search-row{
-  display:flex;
-  gap:12px;
-  margin-bottom:18px;
-}
-
-.search-wrap{
-  position:relative;
-  flex:1;
-}
-
-.search{
-  width:100%;
-  height:50px;
-  padding:0 16px 0 46px;
-  border:1px solid var(--border);
-  border-radius:14px;
-  outline:none;
-  background:#0f0b15;
-  color:var(--text);
-  font-size:16px;
-  font-weight:800;
-}
-
-.search:focus{
-  border-color:var(--border-strong);
-  box-shadow:0 0 0 3px rgba(131,220,230,.08);
-}
-
-.search-icon{
-  position:absolute;
-  left:16px;
-  top:50%;
-  transform:translateY(-50%);
-  color:var(--cyan);
-  font-size:20px;
-  pointer-events:none;
-}
-
-.status{
-  padding:9px 12px;
-  border:1px solid rgba(131,220,230,.15);
-  border-radius:10px;
-  background:rgba(20,14,29,.7);
-  color:var(--muted);
-  font-size:13px;
-  font-weight:800;
-  margin-bottom:18px;
-}
-
-.columns{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(410px,1fr));
-  gap:16px;
-  align-items:start;
-}
-
-.seller{
-  min-width:0;
-  background:linear-gradient(180deg,#130d1b,#0d0912);
-  border:1px solid rgba(131,220,230,.28);
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
-  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.seller-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:14px 16px;
-  background:linear-gradient(180deg,rgba(127,93,186,.22),rgba(127,93,186,.08));
-  border-bottom:1px solid rgba(131,220,230,.2);
-  transition: background 0.2s ease;
-}
-
-.seller-name-btn{
-  flex: 1;
-  background: transparent;
-  border: none;
-  padding: 4px 8px;
-  text-align: left;
-  color: var(--cyan);
-  font-family: "Russo One", sans-serif;
-  font-size: 20px;
-  text-shadow: 0 0 10px rgba(131,220,230,.16);
-  cursor: pointer;
-  user-select: none;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.seller-name-btn:hover{
-  background: rgba(131,220,230,0.06);
-}
-
-.seller-body{
-  max-height: 2000px;
-  overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
-  padding: 10px;
-}
-
-.seller.collapsed .seller-body{
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.seller.collapsed .seller-header{
-  border-bottom: none;
-}
-
-.seller.collapsed .sold-button{
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.95);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.sold-button{
-  min-height:38px;
-  padding:0 14px;
-  border-radius:10px;
-  border:1px solid rgba(131,220,230,.65);
-  background:linear-gradient(180deg,#7f5dba,#62478e);
-  color:white;
-  font-size:14px;
-  font-weight:900;
-  white-space:nowrap;
-  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
-}
-
-.sold-button.saved{
-  background:linear-gradient(180deg,#397d69,#2b5e50);
-  border-color:rgba(124,226,189,.65);
-}
-
-.product-card{
-  display:grid;
-  grid-template-columns:60px minmax(180px,1fr) 74px 105px;
-  gap:9px;
-  align-items:center;
-  min-width:0;
-  margin:7px 0;
-  padding:10px;
-  border:1px solid rgba(131,220,230,.12);
-  border-radius:13px;
-  background:linear-gradient(180deg,#17111f,#120d18);
-  transition:all .2s ease;
-}
-
-.product-card:hover{
-  border-color:rgba(131,220,230,.28);
-  transform: translateY(-1px);
-}
-
-.product-card.has-quantity{
-  border-color:rgba(127,93,186,.75);
-  box-shadow:
-    0 0 0 1px rgba(127,93,186,.08),
-    0 0 22px rgba(127,93,186,.07);
-}
-
-.product-icon-wrap{
-  width:50px;
-  height:50px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:1px solid rgba(131,220,230,.18);
-  border-radius:11px;
-  background:#0d0a12;
-  overflow:hidden;
-  flex:none;
-}
-
-.product-icon{
-  width:42px;
-  height:42px;
-  object-fit:contain;
-  display:block;
-}
-
-.product-info{
-  min-width:0;
-}
-
-.product-name{
-  color:#eefbfc;
-  font-family:"Exo 2",sans-serif;
-  font-size:16px;
-  font-weight:900;
-  line-height:1.1;
-  overflow-wrap:anywhere;
-}
-
-.product-price{
-  margin-top:5px;
-  margin-left:10px;
-  color:var(--cyan);
-  font-family:"Cairo",sans-serif;
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.quantity-area{
-  width:74px;
-  min-width:74px;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.quantity-input{
-  width:44px;
-  min-width:44px;
-  padding:7px 4px;
-  border:1px solid rgba(131,220,230,.4);
-  border-radius:9px;
-  background:#0d0912;
-  color:var(--cyan);
-  text-align:center;
-  outline:none;
-  font-weight:900;
-  font-size:15px;
-}
-
-.quantity-input:focus{
-  border-color:var(--border-strong);
-  box-shadow:0 0 0 3px rgba(131,220,230,.08);
-}
-
-.quantity-input::-webkit-outer-spin-button,
-.quantity-input::-webkit-inner-spin-button{
-  -webkit-appearance:none;
-  appearance:none;
-  margin:0;
-}
-
-.quantity-input{
-  -moz-appearance:textfield;
-  appearance:textfield;
-}
-
-.sum-area{
-  width:105px;
-  min-width:105px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.sum{
-  width:84px;
-  min-width:84px;
-  color:#d9bdff;
-  font-family:"Cairo",sans-serif;
-  font-size:14px;
-  font-weight:900;
-  text-align:center;
-  white-space:nowrap;
-}
-
-.seller-total{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-top:10px;
-  padding:13px 14px;
-  border-top:1px solid rgba(131,220,230,.15);
-  background:rgba(127,93,186,.08);
-  border-radius: 0 0 14px 14px;
-}
-
-.seller-total-label{
-  color:var(--muted);
-  font-size:14px;
-  font-weight:900;
-}
-
-.seller-total-value{
-  color:var(--cyan);
-  font-size:19px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.empty{
-  padding:22px 10px;
-  color:var(--muted);
-  text-align:center;
-  font-weight:800;
-}
-
-.clear-button{
-  display:block;
-  width: 100%;
-  max-width: 300px;
-  margin: 30px auto 10px auto;
-  min-height:46px;
-  padding:0 16px;
-  border:1px solid rgba(131,220,230,.55);
-  border-radius:12px;
-  background:linear-gradient(180deg,#211431,#150d1e);
-  color:var(--cyan);
-  box-shadow:0 12px 35px rgba(0,0,0,.45);
-  font-weight:900;
-  transition: all 0.2s ease;
-}
-
-.clear-button:hover{
-  border-color:var(--border-strong);
-  transform: translateY(-1px);
-}
-
-.menu-button{
-  position:fixed;
-  left:14px;
-  top:14px;
-  z-index:70;
-  width:46px;
-  height:46px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:1px solid rgba(131,220,230,.52);
-  border-radius:12px;
-  background:linear-gradient(180deg,#1c1229,#110a18);
-  color:var(--cyan);
-  box-shadow:0 12px 35px rgba(0,0,0,.35);
-  font-size:22px;
-  transition: transform 0.2s ease;
-}
-
-.menu-button:hover{
-  transform: scale(1.05);
-}
-
-.menu-button.hidden{
-  display:none;
-}
-
-.overlay{
-  position:fixed;
-  inset:0;
-  z-index:60;
-  display:none;
-  background:rgba(0,0,0,.68);
-  backdrop-filter:blur(5px);
-}
-
-.overlay.open{
-  display:block;
-}
-
-.side-panel{
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width:min(520px,92vw);
-  padding:22px;
-  background:linear-gradient(180deg,#100a16,#0c0811);
-  border-right:1px solid rgba(131,220,230,.2);
-  overflow:auto;
-}
-
-.panel-title{
-  margin:0;
-  color:var(--cyan);
-  font-family:"Russo One",sans-serif;
-  font-size:24px;
-}
-
-.panel-subtitle{
-  margin:8px 0 18px;
-  color:var(--muted);
-  font-size:13px;
-  font-weight:800;
-}
-
-.close-panel{
-  position:absolute;
-  top:14px;
-  right:14px;
-  width:40px;
-  height:40px;
-  border:1px solid rgba(131,220,230,.35);
-  border-radius:10px;
-  background:#130d1b;
-  color:var(--cyan);
-  font-size:20px;
-}
-
-.history-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.history-item{
-  border:1px solid rgba(131,220,230,.18);
-  border-radius:14px;
-  padding:13px;
-  background:#130d1b;
-}
-
-.history-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.history-seller{
-  color:var(--cyan);
-  font-weight:900;
-}
-
-.history-date{
-  color:var(--muted);
-  font-size:12px;
-  white-space:nowrap;
-}
-
-.history-total{
-  margin-top:6px;
-  color:white;
-  font-size:18px;
-  font-weight:900;
-}
-
-.history-products{
-  margin-top:8px;
-  color:#c7ced5;
-  font-size:12px;
-  line-height:1.6;
-}
-
-.history-actions{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.history-actions button{
-  min-height:36px;
-  padding:0 11px;
-  border-radius:9px;
-  border:1px solid rgba(131,220,230,.25);
-  background:#18101f;
-  color:var(--cyan);
-  font-weight:900;
-}
-
-.history-actions .delete{
-  color:#ff9eaa;
-  border-color:rgba(239,109,122,.3);
-}
-
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:80;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:rgba(0,0,0,.75);
-  backdrop-filter:blur(7px);
-}
-
-.modal-backdrop.open{
-  display:flex;
-}
-
-.ai-modal{
-  width:min(820px,100%);
-  max-height:calc(100vh - 40px);
-  overflow:auto;
-  border:1px solid rgba(131,220,230,.34);
-  border-radius:18px;
-  background:linear-gradient(180deg,#130d1b,#0c0811);
-  box-shadow:0 25px 70px rgba(0,0,0,.55);
-}
-
-.modal-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:16px 18px;
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (
+      url.pathname === "/api/test-ai" &&
+      request.method === "GET"
+    ) {
+      return jsonResponse({
+        AI: env?.AI ? "ПОДКЛЮЧЕН" : "НЕ ПОДКЛЮЧЕН",
+        model: MODEL
+      });
+    }
+
+    if (
+      url.pathname === "/api/recognize" &&
+      request.method === "POST"
+    ) {
+      return recognizeImage(request, env);
+    }
+
+    if (url.pathname === "/api/recognize") {
+      return errorResponse(
+        "Для распознавания используется POST.",
+        405
+      );
+    }
+
+    if (env?.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
+    return new Response(
+      "ASSETS binding не настроен.",
+      {
+        status: 500,
+        headers: {
+          "Content-Type":
+            "text/plain; charset=utf-8"
+        }
+      }
+    );
+  }
+};
