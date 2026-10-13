@@ -1293,7 +1293,29 @@ button{
   overflow-wrap:anywhere;
 }
 .text-import-preview strong{color:var(--cyan);}
+.text-import-preview .text-import-item{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:6px 0;
+  border-bottom:1px solid rgba(131,220,230,.08);
+}
+.text-import-preview .text-import-item:last-child{border-bottom:0;}
+.text-import-preview .text-import-item-name{min-width:0;overflow-wrap:anywhere;}
+.text-import-preview .text-import-seller-link{
+  flex:none;
+  color:var(--cyan);
+  font-weight:900;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+.text-import-preview .text-import-seller-link:hover{color:#fff;}
 .text-import-preview .unmatched{color:#ffb1ba;}
+@media(max-width:520px){
+  .text-import-preview .text-import-item{flex-direction:column;gap:2px;}
+}
 .text-import-actions{
   display:flex;
   justify-content:flex-end;
@@ -2617,7 +2639,34 @@ function updateTextImportPreview() {
   textImportPreview.appendChild(matchedTitle);
   if (parsed.length) {
     const list = document.createElement("div");
-    list.textContent = parsed.map(item => item.name + " — " + item.quantity).join(" • ");
+    list.className = "text-import-items";
+    for (const item of parsed) {
+      const row = document.createElement("div");
+      row.className = "text-import-item";
+
+      const itemName = document.createElement("span");
+      itemName.className = "text-import-item-name";
+      itemName.textContent = item.name + " — " + item.quantity;
+      row.appendChild(itemName);
+
+      const sellerLink = document.createElement("a");
+      sellerLink.className = "text-import-seller-link";
+      sellerLink.href = "#columns";
+      sellerLink.textContent = "Открыть: " + SELLERS[item.sellerId].name;
+      sellerLink.addEventListener("click", event => {
+        event.preventDefault();
+        activeSellerId = item.sellerId;
+        document.getElementById("search").value = "";
+        renderAll();
+        closeTextImport();
+        document.getElementById("columns").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+      row.appendChild(sellerLink);
+      list.appendChild(row);
+    }
     textImportPreview.appendChild(list);
   }
   if (unmatched.length) {
