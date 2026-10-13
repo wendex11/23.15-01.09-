@@ -555,10 +555,10 @@ button{
 }
 
 .quantity-input{
-  width:44px;
-  min-width:44px;
+  width:54px;
+  min-width:54px;
   max-width:none;
-  padding:7px 4px;
+  padding:8px 5px;
   border:1px solid rgba(131,220,230,.4);
   border-radius:11px;
   background:#0d0912;
@@ -2541,6 +2541,13 @@ function saveSale(sellerId, button) {
   }
 
   saveHistory();
+
+  // После сохранения продажи очищаем количество только у этого продавца.
+  for (const productName of SELLER_ITEMS[sellerId]) {
+    quantities[makeQuantityKey(sellerId, productName)] = 0;
+  }
+  saveQuantities();
+  renderAll();
   renderHistory();
 
   button.classList.add("saved");
