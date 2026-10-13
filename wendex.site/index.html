@@ -198,31 +198,43 @@ button{
   border-bottom:1px solid rgba(131,220,230,.2);
 }
 
-/* Сворачивание и раскрытие продавцов */
+/* Кнопка продавца и плавное раскрытие */
 .seller-name{
+  display:block;
+  flex:1;
+  min-width:0;
+  padding:8px 0;
+  border:0;
+  background:transparent;
   color:var(--cyan);
   font-family:"Russo One",sans-serif;
-  font-size:20px;
+  font-size:clamp(18px,2vw,24px);
+  line-height:1.25;
+  text-align:left;
   text-shadow:0 0 10px rgba(131,220,230,.16);
   cursor:pointer;
   user-select:none;
 }
 
-.seller-name::after{
-  content:"＋";
-  display:inline-block;
-  margin-left:10px;
-  font-family:sans-serif;
-  font-size:16px;
-  opacity:.8;
+.seller-name:focus-visible{
+  outline:2px solid var(--cyan);
+  outline-offset:4px;
+  border-radius:4px;
 }
 
-.seller:not(.collapsed) .seller-name::after{
-  content:"−";
+.seller-body{
+  padding:10px;
+  max-height:4000px;
+  opacity:1;
+  overflow:hidden;
+  transition:max-height .45s ease, opacity .3s ease, padding .45s ease;
 }
 
 .seller.collapsed .seller-body{
-  display:none;
+  max-height:0;
+  opacity:0;
+  padding-top:0;
+  padding-bottom:0;
 }
 
 .seller.collapsed .seller-header{
@@ -1004,11 +1016,6 @@ button{
 
   <div id="columns" class="columns"></div>
 
-  <div class="bottom-total">
-    <div class="bottom-total-label">Общая сумма</div>
-    <div id="globalTotal" class="bottom-total-value">0 ₽</div>
-  </div>
-
   <button id="clearButton" class="clear-button" type="button">🧹 Очистить все ячейки</button>
 </div>
 
@@ -1467,14 +1474,6 @@ function calculateSellerTotal(sellerId) {
   );
 }
 
-function calculateGlobalTotal() {
-  return Object.keys(SELLER_ITEMS).reduce(
-    (total, sellerId) =>
-      total + calculateSellerTotal(sellerId),
-    0
-  );
-}
-
 function matchesSearch(name) {
   const q = document
     .getElementById("search")
@@ -1493,10 +1492,9 @@ function renderAll() {
     container.appendChild(renderSeller(sellerId));
   }
 
-  updateGlobalTotal();
 }
 
-/* Обновлённая функция: каждая колонка раскрывается независимо */
+/* Каждая колонка раскрывается независимо */
 function renderSeller(sellerId) {
   const seller = document.createElement("section");
   seller.className = "seller";
@@ -1509,11 +1507,10 @@ function renderSeller(sellerId) {
   const header = document.createElement("div");
   header.className = "seller-header";
 
-  const title = document.createElement("div");
+  const title = document.createElement("button");
+  title.type = "button";
   title.className = "seller-name";
   title.textContent = SELLERS[sellerId].name;
-  title.setAttribute("role", "button");
-  title.setAttribute("tabindex", "0");
   title.setAttribute(
     "aria-expanded",
     String(!sellerCollapsed[sellerId])
@@ -1535,16 +1532,11 @@ function renderSeller(sellerId) {
       "aria-expanded",
       String(!sellerCollapsed[sellerId])
     );
+    body.inert = sellerCollapsed[sellerId];
   }
 
+  body.inert = sellerCollapsed[sellerId];
   title.addEventListener("click", toggleSeller);
-
-  title.addEventListener("keydown", event => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      toggleSeller();
-    }
-  });
 
   const soldButton = document.createElement("button");
   soldButton.type = "button";
@@ -1714,18 +1706,7 @@ function updateProductVisual(card, sum, sellerId, productName) {
 }
 
 function updateSellerAndGlobalTotals() {
-  const search = document.getElementById("search");
-  const oldValue = search.value;
-
   renderAll();
-
-  search.value = oldValue;
-  updateGlobalTotal();
-}
-
-function updateGlobalTotal() {
-  document.getElementById("globalTotal").textContent =
-    formatMoney(calculateGlobalTotal());
 }
 
 function saveSale(sellerId, button) {
