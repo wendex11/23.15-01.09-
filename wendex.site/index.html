@@ -2469,22 +2469,22 @@ function downloadSaleReport(entry) {
   ctx.fillText(formatMoney(entry.total), width - pad, totalY + 14);
   ctx.textAlign = "left";
 
-  canvas.toBlob(blob => {
-    if (!blob) {
-      showToast("Не удалось создать изображение отчёта");
-      return;
-    }
-    const url = URL.createObjectURL(blob);
+  let reportImage;
+  try {
+    // Храним сжатое изображение прямо в записи истории, чтобы оно оставалось после перезагрузки.
+    reportImage = canvas.toDataURL("image/jpeg", 0.78);
     const link = document.createElement("a");
-    link.href = url;
+    link.href = reportImage;
     link.download = "otchet-" + String(entry.sellerName).replace(/[^a-zа-яё0-9_-]+/gi, "-") + "-" +
-      date.toISOString().replace(/[:.]/g, "-") + ".png";
+      date.toISOString().replace(/[:.]/g, "-") + ".jpg";
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-    showToast("Отчёт о продаже сохранён как PNG");
-  }, "image/png");
+    showToast("Отчёт сохранён и прикреплён к истории продаж");
+  } catch (error) {
+    showToast("Не удалось создать изображение отчёта");
+  }
+  return reportImage || null;
 }
 
 function saveSale(sellerId, button) {
@@ -2522,9 +2522,12 @@ function saveSale(sellerId, button) {
     items
   };
 
-  downloadSaleReport(entry);
+  entry.reportImage = downloadSaleReport(entry) || null;
 
   history.unshift(entry);
+
+  // Ограничиваем число сохранённых изображений, чтобы не переполнить localStorage.
+  history.slice(15).forEach(oldEntry => { delete oldEntry.reportImage; });
 
   if (history.length > 200) {
     history = history.slice(0, 200);
@@ -2620,6 +2623,43 @@ function renderHistory() {
         .join(" • ");
     } else {
       productsBox.textContent = "Продано с нулевым количеством";
+    }
+
+    if (entry.reportImage) {
+      const reportWrap = document.createElement("div");
+      reportWrap.className = "history-report-wrap";
+      reportWrap.style.marginTop = "12px";
+
+      const reportImage = document.createElement("img");
+      reportImage.src = entry.reportImage;
+      reportImage.alt = "Отчёт о продаже: " + entry.sellerName;
+      reportImage.loading = "lazy";
+      reportImage.style.display = "block";
+      reportImage.style.width = "100%";
+      reportImage.style.maxWidth = "620px";
+      reportImage.style.height = "auto";
+      reportImage.style.border = "1px solid rgba(131,220,230,.3)";
+      reportImage.style.borderRadius = "10px";
+      reportWrap.appendChild(reportImage);
+
+      const downloadReport = document.createElement("button");
+      downloadReport.type = "button";
+      downloadReport.textContent = "⬇ Скачать отчёт";
+      downloadReport.addEventListener("click", () => {
+        const link = document.createElement("a");
+        link.href = entry.reportImage;
+        link.download = "otchet-" + String(entry.sellerName).replace(/[^a-zа-яё0-9_-]+/gi, "-") + ".jpg";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      });
+      reportWrap.appendChild(downloadReport);
+      item.appendChild(reportWrap);
+    } else if (entry.items?.length) {
+      const noReport = document.createElement("div");
+      noReport.className = "history-products";
+      noReport.textContent = "Изображение отчёта для этой старой продажи не сохранено";
+      item.appendChild(noReport);
     }
 
     const actions = document.createElement("div");
