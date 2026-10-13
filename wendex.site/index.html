@@ -994,9 +994,6 @@ button{
       <div class="subtitle">Калькулятор товаров</div>
     </div>
 
-    <div class="top-actions">
-      <button id="aiButton" class="top-button ai" type="button">🤖 Распознать скриншот</button>
-    </div>
   </div>
 
   <div class="search-row">
@@ -1954,9 +1951,6 @@ document
 
 /* AI MODAL */
 
-const aiButton =
-  document.getElementById("aiButton");
-
 const aiModal =
   document.getElementById("aiModal");
 
@@ -2012,7 +2006,6 @@ function closeAiModalWindow() {
   aiModal.classList.remove("open");
 }
 
-aiButton.addEventListener("click", openAiModal);
 closeAiModal.addEventListener("click", closeAiModalWindow);
 
 aiModal.addEventListener("click", event => {
