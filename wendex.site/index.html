@@ -2420,128 +2420,200 @@ function updateSellerAndGlobalTotals() {
   });
 }
 
-function downloadSaleReport(entry) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+async function downloadSaleReport(entry) {
+  const items = entry.items || [];
   const width = 1200;
   const pad = 58;
-  const rowHeight = 64;
-  const headerHeight = 300;
-  const footerHeight = 140;
-  const items = entry.items || [];
+  const rowHeight = 76;
+  const headerHeight = 292;
+  const footerHeight = 150;
   const height = headerHeight + Math.max(items.length, 1) * rowHeight + footerHeight;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
   canvas.width = width;
   canvas.height = height;
 
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, "#100b18");
-  gradient.addColorStop(1, "#211431");
-  ctx.fillStyle = gradient;
+  // Загружаем настоящие иконки товаров для отчёта. Недоступные картинки не ломают генерацию.
+  const loadedIcons = await Promise.all(items.map(item => new Promise(resolve => {
+    const url = ICONS[item.name];
+    if (!url) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  })));
+
+  const roundedRect = (x, y, w, h, r) => {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  };
+
+  // Мягкий фон с ненавязчивыми свечениями и округлённой карточкой.
+  const bg = ctx.createLinearGradient(0, 0, width, height);
+  bg.addColorStop(0, "#0e0a16");
+  bg.addColorStop(.55, "#171024");
+  bg.addColorStop(1, "#211632");
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.strokeStyle = "#83dce6";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(18, 18, width - 36, height - 36);
+  const glow = ctx.createRadialGradient(width * .82, 60, 20, width * .82, 60, 520);
+  glow.addColorStop(0, "rgba(131,220,230,.12)");
+  glow.addColorStop(1, "rgba(131,220,230,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.28)";
+  ctx.shadowBlur = 28;
+  ctx.shadowOffsetY = 10;
+  roundedRect(22, 22, width - 44, height - 44, 28);
+  ctx.fillStyle = "rgba(13,9,20,.96)";
+  ctx.fill();
+  ctx.restore();
+
+  roundedRect(22, 22, width - 44, height - 44, 28);
+  ctx.strokeStyle = "rgba(131,220,230,.28)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
   ctx.fillStyle = "#83dce6";
-  ctx.font = "900 38px Arial, sans-serif";
-  ctx.fillText("ОТЧЁТ О ПРОДАЖЕ", pad, 78);
+  ctx.font = "900 37px Arial, sans-serif";
+  ctx.fillText("ОТЧЁТ О ПРОДАЖЕ", pad, 82);
 
-  ctx.fillStyle = "#f3f8fa";
+  ctx.fillStyle = "#f3f0fa";
   ctx.font = "900 30px Arial, sans-serif";
-  ctx.fillText(entry.sellerName, pad, 130);
+  ctx.fillText(entry.sellerName, pad, 132);
 
   const date = new Date(entry.date);
   const dateText = date.toLocaleDateString("ru-RU") + " • " +
-    date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   ctx.fillStyle = "#a7adb8";
-  ctx.font = "600 22px Arial, sans-serif";
+  ctx.font = "600 21px Arial, sans-serif";
   ctx.fillText("Дата и время: " + dateText, pad, 174);
 
+  // Заголовки таблицы на мягкой плашке.
+  roundedRect(pad - 12, 208, width - pad * 2 + 24, 52, 14);
+  ctx.fillStyle = "rgba(127,93,186,.16)";
+  ctx.fill();
   ctx.fillStyle = "#c7b1ef";
-  ctx.font = "900 21px Arial, sans-serif";
-  ctx.fillText("ТОВАР", pad, 242);
+  ctx.font = "900 18px Arial, sans-serif";
+  ctx.fillText("ТОВАР", pad + 70, 240);
   ctx.textAlign = "right";
-  ctx.fillText("КОЛ-ВО", 760, 242);
-  ctx.fillText("ЦЕНА / ШТ.", 960, 242);
-  ctx.fillText("СУММА", width - pad, 242);
+  ctx.fillText("КОЛ-ВО", 760, 240);
+  ctx.fillText("ЦЕНА / ШТ.", 960, 240);
+  ctx.fillText("СУММА", width - pad, 240);
   ctx.textAlign = "left";
-
-  ctx.strokeStyle = "rgba(131,220,230,.45)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(pad, 264);
-  ctx.lineTo(width - pad, 264);
-  ctx.stroke();
 
   if (!items.length) {
     ctx.fillStyle = "#a7adb8";
     ctx.font = "600 23px Arial, sans-serif";
-    ctx.fillText("Товары не указаны (нулевое количество)", pad, headerHeight + 20);
+    ctx.fillText("Товары не указаны (нулевое количество)", pad, headerHeight + 24);
   } else {
     items.forEach((item, index) => {
-      const y = headerHeight + index * rowHeight;
-      if (index % 2 === 0) {
-        ctx.fillStyle = "rgba(255,255,255,.035)";
-        ctx.fillRect(pad - 10, y - 30, width - pad * 2 + 20, rowHeight);
+      const top = headerHeight + index * rowHeight - 30;
+      const y = top + 44;
+
+      roundedRect(pad - 12, top, width - pad * 2 + 24, 64, 14);
+      ctx.fillStyle = index % 2 === 0 ? "rgba(255,255,255,.045)" : "rgba(127,93,186,.07)";
+      ctx.fill();
+
+      // Иконка товара в собственной мягкой плитке.
+      roundedRect(pad, top + 7, 48, 48, 12);
+      ctx.fillStyle = "rgba(131,220,230,.09)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(131,220,230,.20)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const icon = loadedIcons[index];
+      if (icon) {
+        ctx.save();
+        roundedRect(pad + 3, top + 10, 42, 42, 9);
+        ctx.clip();
+        const scale = Math.min(42 / icon.width, 42 / icon.height);
+        const iw = icon.width * scale;
+        const ih = icon.height * scale;
+        ctx.drawImage(icon, pad + 24 - iw / 2, top + 31 - ih / 2, iw, ih);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "#83dce6";
+        ctx.font = "900 20px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(item.name || "?").trim().charAt(0).toUpperCase(), pad + 24, top + 38);
+        ctx.textAlign = "left";
       }
+
       ctx.fillStyle = "#f3f8fa";
       ctx.font = "700 19px Arial, sans-serif";
       let name = item.name;
-      while (ctx.measureText(name).width > 560 && name.length > 4) name = name.slice(0, -2) + "…";
-      ctx.fillText(name, pad, y);
+      while (ctx.measureText(name).width > 490 && name.length > 4) name = name.slice(0, -2) + "…";
+      ctx.fillText(name, pad + 66, y);
+
       ctx.textAlign = "right";
       ctx.fillStyle = "#83dce6";
+      ctx.font = "800 19px Arial, sans-serif";
       ctx.fillText(String(item.quantity), 760, y);
       ctx.fillStyle = "#c7b1ef";
+      ctx.font = "700 18px Arial, sans-serif";
       ctx.fillText(formatMoney(item.price), 960, y);
       ctx.fillStyle = "#f3f8fa";
+      ctx.font = "800 19px Arial, sans-serif";
       ctx.fillText(formatMoney(item.sum), width - pad, y);
       ctx.textAlign = "left";
     });
   }
 
-  const totalY = headerHeight + Math.max(items.length, 1) * rowHeight + 35;
-  ctx.strokeStyle = "#83dce6";
+  const totalY = headerHeight + Math.max(items.length, 1) * rowHeight + 30;
+  ctx.strokeStyle = "rgba(131,220,230,.28)";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(pad, totalY - 30);
-  ctx.lineTo(width - pad, totalY - 30);
+  ctx.moveTo(pad, totalY - 28);
+  ctx.lineTo(width - pad, totalY - 28);
   ctx.stroke();
+
+  roundedRect(width - 430, totalY - 8, 370, 62, 16);
+  ctx.fillStyle = "rgba(131,220,230,.08)";
+  ctx.fill();
   ctx.fillStyle = "#a7adb8";
-  ctx.font = "900 26px Arial, sans-serif";
-  ctx.fillText("ИТОГО", pad, totalY + 12);
+  ctx.font = "900 24px Arial, sans-serif";
+  ctx.fillText("ИТОГО", pad, totalY + 28);
   ctx.textAlign = "right";
   ctx.fillStyle = "#83dce6";
-  ctx.font = "900 34px Arial, sans-serif";
-  ctx.fillText(formatMoney(entry.total), width - pad, totalY + 14);
+  ctx.font = "900 32px Arial, sans-serif";
+  ctx.fillText(formatMoney(entry.total), width - pad - 18, totalY + 31);
   ctx.textAlign = "left";
 
   let reportImage;
   try {
-    // Запускаем копирование в момент клика по «Продал», пока браузер разрешает запись в буфер обмена.
+    // Сначала создаём сохранённую версию; если браузер разрешит, копируем её в буфер обмена.
+    reportImage = canvas.toDataURL("image/jpeg", 0.9);
     if (navigator.clipboard && window.ClipboardItem) {
-      const pngBlobPromise = new Promise(resolve => {
-        canvas.toBlob(resolve, "image/png");
-      });
-      navigator.clipboard.write([
-        new ClipboardItem({ "image/png": pngBlobPromise })
-      ]).then(() => {
-        showToast("Отчёт скопирован в буфер обмена и сохранён в истории");
-      }).catch(() => {
-        showToast("Отчёт сохранён в истории, но браузер не разрешил копирование в буфер обмена");
-      });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+      if (blob) {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        showToast("Мягкий отчёт с иконками сохранён и скопирован");
+      } else {
+        showToast("Отчёт с иконками сохранён в истории");
+      }
     } else {
-      showToast("Отчёт сохранён в истории. Для копирования нужен HTTPS и поддержка буфера обмена");
+      showToast("Отчёт с иконками сохранён в истории");
     }
-    // Храним сжатое изображение прямо в записи истории, чтобы оно оставалось после перезагрузки.
-    reportImage = canvas.toDataURL("image/jpeg", 0.78);
   } catch (error) {
-    showToast("Не удалось создать изображение отчёта");
+    // Если сторонняя иконка блокирует canvas или буфер обмена недоступен,
+    // повторно сохраняем отчёт без копирования.
+    try { reportImage = canvas.toDataURL("image/jpeg", 0.9); } catch (_) { reportImage = null; }
+    showToast(reportImage ? "Отчёт сохранён в истории, копирование недоступно" : "Не удалось создать изображение отчёта");
   }
   return reportImage || null;
 }
 
-function saveSale(sellerId, button) {
+async function saveSale(sellerId, button) {
   const items = [];
 
   for (const productName of SELLER_ITEMS[sellerId]) {
@@ -2576,7 +2648,7 @@ function saveSale(sellerId, button) {
     items
   };
 
-  entry.reportImage = downloadSaleReport(entry) || null;
+  entry.reportImage = await downloadSaleReport(entry) || null;
 
   history.unshift(entry);
 
