@@ -2376,11 +2376,11 @@ function updateSellerAndGlobalTotals() {
 function downloadSaleReport(entry) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
-  const width = 1000;
-  const pad = 54;
-  const rowHeight = 54;
-  const headerHeight = 270;
-  const footerHeight = 125;
+  const width = 1200;
+  const pad = 58;
+  const rowHeight = 64;
+  const headerHeight = 300;
+  const footerHeight = 140;
   const items = entry.items || [];
   const height = headerHeight + Math.max(items.length, 1) * rowHeight + footerHeight;
   canvas.width = width;
@@ -2413,18 +2413,18 @@ function downloadSaleReport(entry) {
 
   ctx.fillStyle = "#c7b1ef";
   ctx.font = "900 21px Arial, sans-serif";
-  ctx.fillText("ТОВАР", pad, 230);
+  ctx.fillText("ТОВАР", pad, 242);
   ctx.textAlign = "right";
-  ctx.fillText("КОЛ-ВО", 660, 230);
-  ctx.fillText("ЦЕНА / ШТ.", 805, 230);
-  ctx.fillText("СУММА", width - pad, 230);
+  ctx.fillText("КОЛ-ВО", 760, 242);
+  ctx.fillText("ЦЕНА / ШТ.", 960, 242);
+  ctx.fillText("СУММА", width - pad, 242);
   ctx.textAlign = "left";
 
   ctx.strokeStyle = "rgba(131,220,230,.45)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(pad, 245);
-  ctx.lineTo(width - pad, 245);
+  ctx.moveTo(pad, 264);
+  ctx.lineTo(width - pad, 264);
   ctx.stroke();
 
   if (!items.length) {
@@ -2441,13 +2441,13 @@ function downloadSaleReport(entry) {
       ctx.fillStyle = "#f3f8fa";
       ctx.font = "700 19px Arial, sans-serif";
       let name = item.name;
-      while (ctx.measureText(name).width > 390 && name.length > 4) name = name.slice(0, -2) + "…";
+      while (ctx.measureText(name).width > 560 && name.length > 4) name = name.slice(0, -2) + "…";
       ctx.fillText(name, pad, y);
       ctx.textAlign = "right";
       ctx.fillStyle = "#83dce6";
-      ctx.fillText(String(item.quantity), 660, y);
+      ctx.fillText(String(item.quantity), 760, y);
       ctx.fillStyle = "#c7b1ef";
-      ctx.fillText(formatMoney(item.price), 805, y);
+      ctx.fillText(formatMoney(item.price), 960, y);
       ctx.fillStyle = "#f3f8fa";
       ctx.fillText(formatMoney(item.sum), width - pad, y);
       ctx.textAlign = "left";
