@@ -2473,14 +2473,7 @@ function downloadSaleReport(entry) {
   try {
     // Храним сжатое изображение прямо в записи истории, чтобы оно оставалось после перезагрузки.
     reportImage = canvas.toDataURL("image/jpeg", 0.78);
-    const link = document.createElement("a");
-    link.href = reportImage;
-    link.download = "otchet-" + String(entry.sellerName).replace(/[^a-zа-яё0-9_-]+/gi, "-") + "-" +
-      date.toISOString().replace(/[:.]/g, "-") + ".jpg";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    showToast("Отчёт сохранён и прикреплён к истории продаж");
+    showToast("Отчёт прикреплён к истории продаж");
   } catch (error) {
     showToast("Не удалось создать изображение отчёта");
   }
@@ -2641,6 +2634,41 @@ function renderHistory() {
       reportImage.style.border = "1px solid rgba(131,220,230,.3)";
       reportImage.style.borderRadius = "10px";
       reportWrap.appendChild(reportImage);
+
+      const copyReport = document.createElement("button");
+      copyReport.type = "button";
+      copyReport.textContent = "📋 Копировать изображение";
+      copyReport.addEventListener("click", async () => {
+        try {
+          if (!navigator.clipboard || !window.ClipboardItem) {
+            throw new Error("Clipboard image API unavailable");
+          }
+          const response = await fetch(entry.reportImage);
+          const blob = await response.blob();
+          const imageBlob = blob.type === "image/png"
+            ? blob
+            : await new Promise(resolve => {
+                const image = new Image();
+                image.onload = () => {
+                  const canvas = document.createElement("canvas");
+                  canvas.width = image.naturalWidth;
+                  canvas.height = image.naturalHeight;
+                  canvas.getContext("2d").drawImage(image, 0, 0);
+                  canvas.toBlob(resolve, "image/png");
+                };
+                image.onerror = () => resolve(null);
+                image.src = entry.reportImage;
+              });
+          if (!imageBlob) throw new Error("Image conversion failed");
+          await navigator.clipboard.write([
+            new ClipboardItem({ [imageBlob.type || "image/png"]: imageBlob })
+          ]);
+          showToast("Изображение отчёта скопировано в буфер обмена");
+        } catch (error) {
+          showToast("Не удалось скопировать изображение. Открой сайт по HTTPS и разреши доступ к буферу обмена");
+        }
+      });
+      reportWrap.appendChild(copyReport);
 
       const downloadReport = document.createElement("button");
       downloadReport.type = "button";
