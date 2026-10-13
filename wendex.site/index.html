@@ -3192,10 +3192,25 @@ async function recognizeCurrentImage() {
     }
 
     let parsed;
+    const cleanedResponse = responseText
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "");
     try {
-      parsed = JSON.parse(responseText);
+      parsed = JSON.parse(cleanedResponse);
     } catch {
-      throw new Error("ИИ вернул ответ в неизвестном формате. Попробуй ещё раз.");
+      // Некоторые ответы модели могут содержать пояснение вокруг JSON.
+      const jsonStart = cleanedResponse.indexOf("{");
+      const jsonEnd = cleanedResponse.lastIndexOf("}");
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        try {
+          parsed = JSON.parse(cleanedResponse.slice(jsonStart, jsonEnd + 1));
+        } catch {
+          throw new Error("Gemini вернул некорректный JSON. Повтори распознавание.");
+        }
+      } else {
+        throw new Error("Gemini вернул ответ без JSON. Повтори распознавание.");
+      }
     }
 
     const items = Array.isArray(parsed.items)
