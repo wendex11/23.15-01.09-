@@ -2299,7 +2299,20 @@ function renderProductCard(sellerId, productName) {
 
   resizeQuantityInput(input);
 
-  const updateFromInput = () => {
+  const updateFromInput = (event) => {
+    // Не подставляем ноль обратно, пока пользователь вводит число.
+    if (input.value === "") {
+      setQuantity(sellerId, productName, 0);
+      resizeQuantityInput(input);
+      updateProductVisual(card, sum, sellerId, productName);
+      updateSellerAndGlobalTotals();
+
+      if (event && event.type === "change") {
+        input.value = "0";
+      }
+      return;
+    }
+
     let value = Number(input.value);
 
     if (!Number.isFinite(value) || value < 0) {
@@ -2307,19 +2320,26 @@ function renderProductCard(sellerId, productName) {
     }
 
     value = Math.floor(value);
-
     input.value = String(value);
 
     setQuantity(sellerId, productName, value);
-
     resizeQuantityInput(input);
-
     updateProductVisual(card, sum, sellerId, productName);
     updateSellerAndGlobalTotals();
   };
 
+  input.addEventListener("focus", () => {
+    if (Number(input.value) === 0) {
+      input.value = "";
+    }
+  });
   input.addEventListener("input", updateFromInput);
   input.addEventListener("change", updateFromInput);
+  input.addEventListener("blur", () => {
+    if (input.value === "") {
+      input.value = "0";
+    }
+  });
 
   quantityArea.appendChild(input);
 
