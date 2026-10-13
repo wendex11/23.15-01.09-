@@ -287,6 +287,36 @@ button{
   border-radius:4px;
 }
 
+.seller-title-wrap{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 280px;
+  min-width:0;
+}
+.seller-contact-info{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  color:var(--muted);
+  font-family:"Cairo",sans-serif;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.seller-contact-info strong{
+  color:#e8e0f5;
+  font-weight:900;
+}
+.seller-contact-info a{
+  color:var(--cyan);
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+.seller-contact-info a:hover{
+  text-decoration:underline;
+}
+
 .seller-body{
   padding:10px;
   max-height:4000px;
@@ -1444,6 +1474,29 @@ const SELLERS = {
   }
 };
 
+const SELLER_CONTACTS = {
+  WhiteFox: {
+    nick: "WhiteFox__",
+    discord: "whitefox1399"
+  },
+  Farma: {
+    nick: "Яуженидома, Артас_вертихвост",
+    discord: "https://discord.gg/ygePdR7m2"
+  },
+  PamperShop: {
+    nick: "Cemov, OverCatr, ГлаварьУнитаза",
+    discord: "https://discord.gg/6wcam9asK"
+  },
+  BanditCamp: {
+    nick: "staraptor, Zaswqx",
+    discord: "https://discord.gg/7g69QtSxr"
+  },
+  Stalpoint: {
+    nick: "Pozdnya",
+    discord: "https://discord.gg/zYHyxWnqS"
+  }
+};
+
 /* По умолчанию все продавцы свёрнуты */
 const sellerCollapsed = {
   WhiteFox: true,
@@ -1955,6 +2008,9 @@ function renderSeller(sellerId) {
   const header = document.createElement("div");
   header.className = "seller-header";
 
+  const titleWrap = document.createElement("div");
+  titleWrap.className = "seller-title-wrap";
+
   const title = document.createElement("button");
   title.type = "button";
   title.className = "seller-name";
@@ -1968,8 +2024,35 @@ function renderSeller(sellerId) {
     "Свернуть или раскрыть: " + SELLERS[sellerId].name
   );
 
-  title.setAttribute("aria-expanded", "true");
-  title.setAttribute("aria-label", "Выбранный магазин: " + SELLERS[sellerId].name);
+  const contactInfo = document.createElement("div");
+  contactInfo.className = "seller-contact-info";
+  const contact = SELLER_CONTACTS[sellerId];
+  if (contact) {
+    const nickLine = document.createElement("div");
+    const nickLabel = document.createElement("strong");
+    nickLabel.textContent = "Игровой ник: ";
+    nickLine.appendChild(nickLabel);
+    nickLine.appendChild(document.createTextNode(contact.nick));
+    contactInfo.appendChild(nickLine);
+
+    const discordLine = document.createElement("div");
+    const discordLabel = document.createElement("strong");
+    discordLabel.textContent = "Discord: ";
+    discordLine.appendChild(discordLabel);
+    if (contact.discord.startsWith("https://")) {
+      const discordLink = document.createElement("a");
+      discordLink.href = contact.discord;
+      discordLink.textContent = contact.discord;
+      discordLink.target = "_blank";
+      discordLink.rel = "noopener noreferrer";
+      discordLine.appendChild(discordLink);
+    } else {
+      discordLine.appendChild(document.createTextNode(contact.discord));
+    }
+    contactInfo.appendChild(discordLine);
+  }
+  titleWrap.appendChild(title);
+  titleWrap.appendChild(contactInfo);
 
   const actions = document.createElement("div");
   actions.className = "seller-header-actions";
@@ -1993,7 +2076,7 @@ function renderSeller(sellerId) {
 
   actions.appendChild(soldButton);
   actions.appendChild(clearButton);
-  header.appendChild(title);
+  header.appendChild(titleWrap);
   header.appendChild(actions);
 
   const body = document.createElement("div");
