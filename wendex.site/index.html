@@ -2568,29 +2568,6 @@ function renderHistory() {
     const item = document.createElement("div");
     item.className = "history-item";
 
-    const top = document.createElement("div");
-    top.className = "history-top";
-
-    const seller = document.createElement("div");
-    seller.className = "history-seller";
-    seller.textContent = entry.sellerName;
-
-    const date = document.createElement("div");
-    date.className = "history-date";
-
-    const dateObject = new Date(entry.date);
-
-    date.textContent =
-      dateObject.toLocaleDateString("ru-RU") +
-      " " +
-      dateObject.toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-
-    top.appendChild(seller);
-    top.appendChild(date);
-
     const total = document.createElement("div");
     total.className = "history-total";
     total.textContent = formatMoney(entry.total);
@@ -2615,22 +2592,6 @@ function renderHistory() {
 
     paymentLabel.appendChild(paymentCheckbox);
     paymentLabel.appendChild(paymentText);
-
-    const productsBox = document.createElement("div");
-    productsBox.className = "history-products";
-
-    if (entry.items?.length) {
-      productsBox.textContent = entry.items
-        .map(
-          item =>
-            item.name +
-            " × " +
-            item.quantity
-        )
-        .join(" • ");
-    } else {
-      productsBox.textContent = "Продано с нулевым количеством";
-    }
 
     if (entry.reportImage) {
       const reportWrap = document.createElement("div");
@@ -2696,11 +2657,6 @@ function renderHistory() {
       });
       reportWrap.appendChild(copyReport);
       item.appendChild(reportWrap);
-    } else if (entry.items?.length) {
-      const noReport = document.createElement("div");
-      noReport.className = "history-products";
-      noReport.textContent = "Изображение отчёта для этой старой продажи не сохранено";
-      item.appendChild(noReport);
     }
 
     const actions = document.createElement("div");
@@ -2726,10 +2682,8 @@ function renderHistory() {
     actions.appendChild(restoreButton);
     actions.appendChild(deleteButton);
 
-    item.appendChild(top);
     item.appendChild(total);
     item.appendChild(paymentLabel);
-    item.appendChild(productsBox);
     item.appendChild(actions);
 
     list.appendChild(item);
