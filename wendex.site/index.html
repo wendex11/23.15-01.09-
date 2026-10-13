@@ -1535,7 +1535,6 @@ function renderSeller(sellerId) {
     body.inert = sellerCollapsed[sellerId];
   }
 
-  body.inert = sellerCollapsed[sellerId];
   title.addEventListener("click", toggleSeller);
 
   const soldButton = document.createElement("button");
@@ -1552,6 +1551,7 @@ function renderSeller(sellerId) {
 
   const body = document.createElement("div");
   body.className = "seller-body";
+  body.inert = sellerCollapsed[sellerId];
 
   const visibleProducts = SELLER_ITEMS[sellerId].filter(matchesSearch);
 
