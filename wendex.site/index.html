@@ -1706,7 +1706,18 @@ function updateProductVisual(card, sum, sellerId, productName) {
 }
 
 function updateSellerAndGlobalTotals() {
-  renderAll();
+  const sellers = document.getElementById("columns").children;
+  const sellerIds = ["Logovo", "Staraptor", "WhiteFox"];
+
+  sellerIds.forEach((sellerId, index) => {
+    const totalValue = sellers[index]?.querySelector(".seller-total-value");
+
+    if (totalValue) {
+      totalValue.textContent = formatMoney(
+        calculateSellerTotal(sellerId)
+      );
+    }
+  });
 }
 
 function saveSale(sellerId, button) {
