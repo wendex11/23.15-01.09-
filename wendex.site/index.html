@@ -1106,7 +1106,7 @@ const SELLERS = {
     column: 4
   },
   WhiteFox: {
-    name: "WhiteFox",
+    name: "Сеня",
     column: 8
   }
 };
@@ -1158,9 +1158,28 @@ const SELLER_ITEMS = {
     "Поташ"
   ],
   WhiteFox: [
-    "Мясо шавки",
-    "Мясо кабана",
-    "Мясо хрюши"
+    "Помидор",
+    "Гнилые доски",
+    "Колбасная нарезка",
+    "Поташ",
+    "Перчатки",
+    "Борная кислота",
+    "Раствор йода",
+    "Кислота",
+    "Щепки",
+    "Банка с макаронами",
+    "Реагенты",
+    "Асбест",
+    "Молоко",
+    "Кастрюля",
+    "Сковорода",
+    "Полутухлая рыба",
+    "Красная икра",
+    "Ткань",
+    "Отличная тушенка",
+    "Технический спирт",
+    "Гипс",
+    "Аммиак"
   ]
 };
 
@@ -1180,7 +1199,21 @@ const ALLOWED_AI_ITEMS = [
   "Поташ",
   "Мясо шавки",
   "Мясо кабана",
-  "Мясо хрюши"
+  "Мясо хрюши",
+  "Гнилые доски",
+  "Колбасная нарезка",
+  "Борная кислота",
+  "Раствор йода",
+  "Кислота",
+  "Щепки",
+  "Банка с макаронами",
+  "Асбест",
+  "Кастрюля",
+  "Сковорода",
+  "Полутухлая рыба",
+  "Красная икра",
+  "Ткань",
+  "Технический спирт"
 ];
 
 const STORAGE_QUANTITIES = "burmalda_quantities_v3";
@@ -1409,9 +1442,34 @@ async function loadPrices() {
       }
     }
 
-    prices[makeQuantityKey("WhiteFox", "Мясо шавки")] = 3000;
-    prices[makeQuantityKey("WhiteFox", "Мясо кабана")] = 3000;
-    prices[makeQuantityKey("WhiteFox", "Мясо хрюши")] = 3000;
+    const senyaPrices = {
+      "Помидор": 1500,
+      "Гнилые доски": 800,
+      "Колбасная нарезка": 1100,
+      "Поташ": 350,
+      "Перчатки": 700,
+      "Борная кислота": 1000,
+      "Раствор йода": 200,
+      "Кислота": 150,
+      "Щепки": 50,
+      "Банка с макаронами": 200,
+      "Реагенты": 650,
+      "Асбест": 250,
+      "Молоко": 70,
+      "Кастрюля": 1400,
+      "Сковорода": 1400,
+      "Полутухлая рыба": 6000,
+      "Красная икра": 900,
+      "Ткань": 1500,
+      "Отличная тушенка": 1700,
+      "Технический спирт": 750,
+      "Гипс": 90,
+      "Аммиак": 13000
+    };
+
+    for (const [productName, price] of Object.entries(senyaPrices)) {
+      prices[makeQuantityKey("WhiteFox", productName)] = price;
+    }
 
     prices[makeQuantityKey("Logovo", "Кофе")] =
       prices[makeQuantityKey("Logovo", "Коффе")] ??
@@ -1440,9 +1498,28 @@ async function loadPrices() {
       [makeQuantityKey("Staraptor","Чеснок")]:500,
       [makeQuantityKey("Staraptor","Поташ")]:500,
 
-      [makeQuantityKey("WhiteFox","Мясо шавки")]:3000,
-      [makeQuantityKey("WhiteFox","Мясо кабана")]:3000,
-      [makeQuantityKey("WhiteFox","Мясо хрюши")]:3000
+      [makeQuantityKey("WhiteFox","Помидор")]:1500,
+      [makeQuantityKey("WhiteFox","Гнилые доски")]:800,
+      [makeQuantityKey("WhiteFox","Колбасная нарезка")]:1100,
+      [makeQuantityKey("WhiteFox","Поташ")]:350,
+      [makeQuantityKey("WhiteFox","Перчатки")]:700,
+      [makeQuantityKey("WhiteFox","Борная кислота")]:1000,
+      [makeQuantityKey("WhiteFox","Раствор йода")]:200,
+      [makeQuantityKey("WhiteFox","Кислота")]:150,
+      [makeQuantityKey("WhiteFox","Щепки")]:50,
+      [makeQuantityKey("WhiteFox","Банка с макаронами")]:200,
+      [makeQuantityKey("WhiteFox","Реагенты")]:650,
+      [makeQuantityKey("WhiteFox","Асбест")]:250,
+      [makeQuantityKey("WhiteFox","Молоко")]:70,
+      [makeQuantityKey("WhiteFox","Кастрюля")]:1400,
+      [makeQuantityKey("WhiteFox","Сковорода")]:1400,
+      [makeQuantityKey("WhiteFox","Полутухлая рыба")]:6000,
+      [makeQuantityKey("WhiteFox","Красная икра")]:900,
+      [makeQuantityKey("WhiteFox","Ткань")]:1500,
+      [makeQuantityKey("WhiteFox","Отличная тушенка")]:1700,
+      [makeQuantityKey("WhiteFox","Технический спирт")]:750,
+      [makeQuantityKey("WhiteFox","Гипс")]:90,
+      [makeQuantityKey("WhiteFox","Аммиак")]:13000
     };
 
     renderAll();
@@ -1601,13 +1678,14 @@ function renderProductCard(sellerId, productName) {
   const iconWrap = document.createElement("div");
   iconWrap.className = "product-icon-wrap";
 
-  const icon = document.createElement("img");
-  icon.className = "product-icon";
-  icon.alt = productName;
-  icon.src = ICONS[productName] || "";
-  icon.loading = "lazy";
-
-  iconWrap.appendChild(icon);
+  if (ICONS[productName]) {
+    const icon = document.createElement("img");
+    icon.className = "product-icon";
+    icon.alt = productName;
+    icon.src = ICONS[productName];
+    icon.loading = "lazy";
+    iconWrap.appendChild(icon);
+  }
 
   const info = document.createElement("div");
   info.className = "product-info";
