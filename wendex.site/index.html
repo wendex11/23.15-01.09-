@@ -457,17 +457,23 @@ button{
 .product-card .quantity-area{
   grid-column:1 / -1;
   grid-row:2;
-  width:calc(95% - 5px);
+  width:calc(100% + 8px);
   min-width:0;
+  margin-right:-8px;
   justify-content:stretch;
   justify-self:start;
+  overflow:hidden;
+  border-radius:11px;
 }
 
 .product-card .quantity-input{
-  width:100%;
+  width:calc(100% + 12px);
   min-width:0;
-  max-width:100%;
+  max-width:none;
   box-sizing:border-box;
+  margin-right:-12px;
+  position:relative;
+  z-index:1;
 }
 
 .product-card .sum-area{
