@@ -457,9 +457,9 @@ button{
 .product-card .quantity-area{
   grid-column:1 / -1;
   grid-row:2;
-  width:calc(50% - 5px);
+  width:calc(50% - 9px);
   min-width:0;
-  height:52px;
+  height:48px;
   margin:0;
   justify-content:stretch;
   justify-self:start;
@@ -474,14 +474,27 @@ button{
   width:100%;
   min-width:0;
   max-width:none;
-  height:50px;
+  height:46px;
   padding:8px 5px;
-  border:0;
+  border:0 !important;
   border-radius:10px;
+  box-shadow:none !important;
+  outline:none !important;
   box-sizing:border-box;
   margin:0;
   position:relative;
   z-index:1;
+  text-align:center;
+  text-align-last:center;
+  appearance:textfield;
+  -moz-appearance:textfield;
+}
+
+.product-card .quantity-input:focus,
+.product-card .quantity-input:focus-visible{
+  border:0 !important;
+  outline:none !important;
+  box-shadow:none !important;
 }
 
 .product-card .sum-area{
