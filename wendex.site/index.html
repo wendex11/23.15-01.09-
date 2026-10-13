@@ -306,8 +306,39 @@ button{
   border-bottom:none;
 }
 
-.seller.collapsed .sold-button{
+.seller.collapsed .seller-header-actions{
   display:none;
+}
+
+.seller-header-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  flex:none;
+}
+
+.seller-clear-button{
+  min-height:38px;
+  padding:0 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,190,120,.55);
+  background:linear-gradient(180deg,#38251c,#21140f);
+  color:#ffd0a0;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.seller-clear-button:hover{
+  border-color:#ffd0a0;
+  background:linear-gradient(180deg,#4a3023,#2b1a12);
+}
+
+.seller-clear-button:focus-visible{
+  outline:2px solid #ffd0a0;
+  outline-offset:3px;
 }
 
 .sold-button{
@@ -1116,11 +1147,18 @@ button{
     bottom:10px;
   }
 
-  .clear-button{
-    position:static;
-    display:block;
+  .seller-header{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .seller-header-actions{
     width:100%;
-    margin-top:10px;
+    justify-content:flex-start;
+  }
+
+  .seller-header-actions button{
+    flex:1 1 auto;
   }
 }
 </style>
@@ -1157,7 +1195,6 @@ button{
 
   <div id="columns" class="columns"></div>
 
-  <button id="clearButton" class="clear-button" type="button">🧹 Очистить все ячейки</button>
 </div>
 
 <!-- HISTORY MENU -->
@@ -1791,17 +1828,30 @@ function renderSeller(sellerId) {
   title.setAttribute("aria-expanded", "true");
   title.setAttribute("aria-label", "Выбранный магазин: " + SELLERS[sellerId].name);
 
+  const actions = document.createElement("div");
+  actions.className = "seller-header-actions";
+
   const soldButton = document.createElement("button");
   soldButton.type = "button";
   soldButton.className = "sold-button";
   soldButton.textContent = "Продал";
-
   soldButton.addEventListener("click", () => {
     saveSale(sellerId, soldButton);
   });
 
+  const clearButton = document.createElement("button");
+  clearButton.type = "button";
+  clearButton.className = "seller-clear-button";
+  clearButton.textContent = "🧹 Очистить ячейки";
+  clearButton.setAttribute("aria-label", "Очистить все ячейки продавца " + SELLERS[sellerId].name);
+  clearButton.addEventListener("click", () => {
+    clearSellerQuantities(sellerId);
+  });
+
+  actions.appendChild(soldButton);
+  actions.appendChild(clearButton);
   header.appendChild(title);
-  header.appendChild(soldButton);
+  header.appendChild(actions);
 
   const body = document.createElement("div");
   body.className = "seller-body";
@@ -2147,20 +2197,19 @@ function deleteHistoryEntry(id) {
   renderHistory();
 }
 
-function clearAllQuantities() {
-  for (const sellerId of Object.keys(SELLER_ITEMS)) {
-    for (const productName of SELLER_ITEMS[sellerId]) {
-      quantities[makeQuantityKey(
-        sellerId,
-        productName
-      )] = 0;
-    }
+function clearSellerQuantities(sellerId) {
+  const sellerName = SELLERS[sellerId].name;
+  if (!confirm("Очистить все ячейки только у продавца «" + sellerName + "»?")) {
+    return;
+  }
+
+  for (const productName of SELLER_ITEMS[sellerId]) {
+    quantities[makeQuantityKey(sellerId, productName)] = 0;
   }
 
   saveQuantities();
   renderAll();
-
-  showToast("Все ячейки очищены");
+  showToast("Ячейки продавца «" + sellerName + "» очищены");
 }
 
 /* MENU */
@@ -2198,12 +2247,6 @@ overlay.addEventListener("click", event => {
 document
   .getElementById("search")
   .addEventListener("input", renderAll);
-
-/* CLEAR */
-
-document
-  .getElementById("clearButton")
-  .addEventListener("click", clearAllQuantities);
 
 /* AI MODAL */
 
