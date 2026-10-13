@@ -1112,6 +1112,10 @@ const SELLERS = {
   BanditCamp: {
     name: "Торговый Лагерь Бандитов",
     column: 14
+  },
+  Stalpoint: {
+    name: "stalpoint",
+    column: 16
   }
 };
 
@@ -1120,7 +1124,8 @@ const sellerCollapsed = {
   WhiteFox: true,
   Farma: true,
   PamperShop: true,
-  BanditCamp: true
+  BanditCamp: true,
+  Stalpoint: true
 };
 
 const ICONS = {
@@ -1180,6 +1185,10 @@ const SELLER_ITEMS = {
     "Газовые",
     "Специи",
     "Дрожжи"
+  ],
+  Stalpoint: [
+    "Клей",
+    "Банка с пшеном"
   ]
 };
 
@@ -1459,6 +1468,8 @@ async function loadPrices() {
     prices[makeQuantityKey("BanditCamp", "Газовые")] = 6250;
     prices[makeQuantityKey("BanditCamp", "Специи")] = 5000;
     prices[makeQuantityKey("BanditCamp", "Дрожжи")] = 2300;
+    prices[makeQuantityKey("Stalpoint", "Клей")] = 1500;
+    prices[makeQuantityKey("Stalpoint", "Банка с пшеном")] = 2000;
 
     renderAll();
 
@@ -1494,7 +1505,9 @@ async function loadPrices() {
       [makeQuantityKey("PamperShop","Чеснок")]:350,
       [makeQuantityKey("BanditCamp","Газовые")]:6250,
       [makeQuantityKey("BanditCamp","Специи")]:5000,
-      [makeQuantityKey("BanditCamp","Дрожжи")]:2300
+      [makeQuantityKey("BanditCamp","Дрожжи")]:2300,
+      [makeQuantityKey("Stalpoint","Клей")]:1500,
+      [makeQuantityKey("Stalpoint","Банка с пшеном")]:2000
     };
 
     renderAll();
