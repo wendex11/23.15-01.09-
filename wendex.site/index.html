@@ -1476,6 +1476,35 @@ button{
 .ai-key-settings input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.12)}
 .ai-key-hint{font-size:12px;line-height:1.45;opacity:.75}
 
+.auction-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+  gap:14px;
+  padding:15px;
+}
+.auction-item{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:112px;
+  padding:12px;
+  border:1px solid rgba(131,220,230,.16);
+  border-radius:17px;
+  background:linear-gradient(145deg,#1b1427,#100b17 80%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+  transition:border-color .15s ease,transform .15s ease;
+}
+.auction-item:hover{
+  border-color:rgba(131,220,230,.42);
+  transform:translateY(-2px);
+}
+.auction-icon{
+  width:76px;
+  height:76px;
+  object-fit:contain;
+  image-rendering:auto;
+}
+
 </style>
 </head>
 
@@ -1664,8 +1693,16 @@ const ICONS = {
   "Клей": "https://cdn.discordapp.com/attachments/1554512040846950431/1554512041010798762/item.png?ex=6ace4b28&is=6accf9a8&hm=b00ac09b8c6c3ce9af67dc91042740f27bd0075c85611427dc81ae5e8602a9dd&",
   "Банка с пшеном": "https://cdn.discordapp.com/attachments/1480896761055809700/1480896761508790422/item.png?ex=6acec4d5&is=6acd7355&hm=98aef3bb3db2ae211286833bd1254f4cbfb3a733eafc50046305aec25c32df94&",
   "Банка с фасолью": "https://cdn.discordapp.com/attachments/1482377318956662820/1482377319535345724/item.png?ex=6ace38f6&is=6acce776&hm=2874b7a44b949ce53e52ee9939229826d6f294aac9d63d1cef962b0cae0f2574&",
-  "Банка с горохом": "https://cdn.discordapp.com/attachments/1482377161456226335/1482377161976582194/item.png?ex=6ace38d0&is=6acce750&hm=c132626797dbaa7cdd06c8a81d40f42c047bd5e6e6e53336481db7460cbbff7f&"
+  "Банка с горохом": "https://cdn.discordapp.com/attachments/1482377161456226335/1482377161976582194/item.png?ex=6ace38d0&is=6acce750&hm=c132626797dbaa7cdd06c8a81d40f42c047bd5e6e6e53336481db7460cbbff7f&",
+  "Микроэлектроника": "https://cdn.discordapp.com/attachments/1496953998433849417/1496953998605942794/item.png?ex=6ad1278d&is=6acfd60d&hm=91da7ea812cef46530d179e80ba0edd56970aa805802d5de7ed550887d26c80f&"
 };
+
+const AUCTION_ITEMS = [
+  "Банка с макаронами",
+  "Асбест",
+  "Красная икра",
+  "Микроэлектроника"
+];
 
 const SELLER_ITEMS = {
   WhiteFox: [
@@ -1676,14 +1713,11 @@ const SELLER_ITEMS = {
     "Перчатки",
     "Кислота",
     "Щепки",
-    "Банка с макаронами",
     "Реагенты",
-    "Асбест",
     "Молоко",
     "Кастрюля",
     "Сковорода",
     "Полутухлая рыба",
-    "Красная икра",
     "Ткань",
     "Отличная тушенка",
     "Технический спирт",
@@ -1724,14 +1758,11 @@ const ALLOWED_AI_ITEMS = [
   "Раствор йода",
   "Кислота",
   "Щепки",
-  "Банка с макаронами",
   "Реагенты",
-  "Асбест",
   "Молоко",
   "Кастрюля",
   "Сковорода",
   "Полутухлая рыба",
-  "Красная икра",
   "Ткань",
   "Отличная тушенка",
   "Технический спирт",
@@ -1960,17 +1991,17 @@ async function loadPrices() {
       "Перчатки": 700,
       "Кислота": 150,
       "Щепки": 50,
-      "Банка с макаронами": 200,
+      "Банка с макаронами": 0,
       "Реагенты": 650,
-      "Асбест": 250,
+      "Асбест": 0,
       "Молоко": 70,
-      "Кастрюля": 1400,
-      "Сковорода": 1400,
+      "Кастрюля": 700,
+      "Сковорода": 700,
       "Полутухлая рыба": 6000,
-      "Красная икра": 900,
+      "Красная икра": 0,
       "Ткань": 1500,
       "Отличная тушенка": 1700,
-      "Технический спирт": 750,
+      "Технический спирт": 650,
       "Гипс": 90,
       "Аммиак": 13000,
       "Банка с пшеном": 2000
@@ -2006,17 +2037,17 @@ async function loadPrices() {
       [makeQuantityKey("WhiteFox","Перчатки")]:700,
       [makeQuantityKey("WhiteFox","Кислота")]:150,
       [makeQuantityKey("WhiteFox","Щепки")]:50,
-      [makeQuantityKey("WhiteFox","Банка с макаронами")]:200,
+      [makeQuantityKey("WhiteFox","Банка с макаронами")]:0,
       [makeQuantityKey("WhiteFox","Реагенты")]:650,
-      [makeQuantityKey("WhiteFox","Асбест")]:250,
+      [makeQuantityKey("WhiteFox","Асбест")]:0,
       [makeQuantityKey("WhiteFox","Молоко")]:70,
-      [makeQuantityKey("WhiteFox","Кастрюля")]:1400,
-      [makeQuantityKey("WhiteFox","Сковорода")]:1400,
+      [makeQuantityKey("WhiteFox","Кастрюля")]:700,
+      [makeQuantityKey("WhiteFox","Сковорода")]:700,
       [makeQuantityKey("WhiteFox","Полутухлая рыба")]:6000,
-      [makeQuantityKey("WhiteFox","Красная икра")]:900,
+      [makeQuantityKey("WhiteFox","Красная икра")]:0,
       [makeQuantityKey("WhiteFox","Ткань")]:1500,
       [makeQuantityKey("WhiteFox","Отличная тушенка")]:1700,
-      [makeQuantityKey("WhiteFox","Технический спирт")]:750,
+      [makeQuantityKey("WhiteFox","Технический спирт")]:650,
       [makeQuantityKey("WhiteFox","Гипс")]:90,
       [makeQuantityKey("WhiteFox","Аммиак")]:13000,
       [makeQuantityKey("Farma","Кофе")]:480,
@@ -2081,9 +2112,16 @@ function renderAll() {
       productName.toLowerCase().includes(search)
     )
   );
+  const matchingAuctionItems = AUCTION_ITEMS.filter(productName =>
+    productName.toLowerCase().includes(search)
+  );
+  const availableViews = [
+    ...matchingSellerIds,
+    ...(matchingAuctionItems.length ? ["Auction"] : [])
+  ];
 
-  if (!matchingSellerIds.includes(activeSellerId)) {
-    activeSellerId = matchingSellerIds[0] || sellerIds[0];
+  if (!availableViews.includes(activeSellerId)) {
+    activeSellerId = availableViews[0] || "Auction";
   }
 
   const layout = document.createElement("div");
@@ -2091,7 +2129,7 @@ function renderAll() {
 
   const nav = document.createElement("nav");
   nav.className = "store-nav";
-  nav.setAttribute("aria-label", "Магазины");
+  nav.setAttribute("aria-label", "Магазины и разделы");
 
   for (const sellerId of sellerIds) {
     const button = document.createElement("button");
@@ -2117,13 +2155,80 @@ function renderAll() {
     nav.appendChild(button);
   }
 
+  const auctionButton = document.createElement("button");
+  auctionButton.type = "button";
+  auctionButton.className = "store-nav-button";
+  auctionButton.classList.toggle("active", activeSellerId === "Auction");
+  auctionButton.setAttribute("aria-pressed", String(activeSellerId === "Auction"));
+  auctionButton.textContent = "Аукцион";
+
+  const auctionCount = document.createElement("span");
+  auctionCount.className = "store-nav-count";
+  auctionCount.textContent = search
+    ? matchingAuctionItems.length + (matchingAuctionItems.length === 1 ? " совпадение" : " совпадений")
+    : AUCTION_ITEMS.length + " предмета";
+  auctionButton.appendChild(auctionCount);
+  auctionButton.addEventListener("click", () => {
+    activeSellerId = "Auction";
+    renderAll();
+  });
+  nav.appendChild(auctionButton);
+
   const content = document.createElement("div");
   content.className = "store-content";
-  content.appendChild(renderSeller(activeSellerId));
+  content.appendChild(
+    activeSellerId === "Auction"
+      ? renderAuction(matchingAuctionItems)
+      : renderSeller(activeSellerId)
+  );
 
   layout.appendChild(nav);
   layout.appendChild(content);
   container.appendChild(layout);
+}
+
+function renderAuction(items) {
+  const section = document.createElement("section");
+  section.className = "seller";
+
+  const header = document.createElement("div");
+  header.className = "seller-header";
+  const titleWrap = document.createElement("div");
+  titleWrap.className = "seller-title-wrap";
+  const title = document.createElement("div");
+  title.className = "seller-name";
+  title.textContent = "Аукцион";
+  titleWrap.appendChild(title);
+  header.appendChild(titleWrap);
+  section.appendChild(header);
+
+  const grid = document.createElement("div");
+  grid.className = "auction-grid";
+
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Ничего не найдено";
+    grid.appendChild(empty);
+  } else {
+    for (const productName of items) {
+      const item = document.createElement("div");
+      item.className = "auction-item";
+      item.title = productName;
+      item.setAttribute("aria-label", productName);
+
+      const icon = document.createElement("img");
+      icon.className = "auction-icon";
+      icon.alt = productName;
+      icon.src = ICONS[productName] || "";
+      icon.loading = "lazy";
+      item.appendChild(icon);
+      grid.appendChild(item);
+    }
+  }
+
+  section.appendChild(grid);
+  return section;
 }
 
 /* Карточка выбранного магазина */
