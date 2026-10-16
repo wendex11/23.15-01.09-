@@ -818,6 +818,46 @@ button{
   padding:13px;
   background:#130d1b;
 }
+.history-item.is-unpaid{
+  border-color:rgba(255,174,105,.55);
+  background:linear-gradient(135deg,rgba(255,174,105,.09),#130d1b 58%);
+}
+.history-item.is-recent-paid{
+  border-color:rgba(105,230,166,.55);
+  box-shadow:inset 3px 0 0 rgba(105,230,166,.8);
+}
+.history-status-badge{
+  display:inline-flex;
+  margin-bottom:7px;
+  padding:4px 8px;
+  border-radius:7px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#ffc58d;
+  background:rgba(255,174,105,.12);
+}
+.history-item.is-recent-paid .history-status-badge{
+  color:#8ef0c1;
+  background:rgba(105,230,166,.1);
+}
+.history-report-image{cursor:zoom-in}
+.history-image-modal{
+  position:fixed;inset:0;z-index:9999;display:none;
+  align-items:center;justify-content:center;padding:24px;
+  background:rgba(0,0,0,.92);cursor:zoom-out;
+}
+.history-image-modal.is-open{display:flex}
+.history-image-modal img{
+  display:block;max-width:96vw;max-height:92vh;width:auto;height:auto;
+  object-fit:contain;border-radius:12px;box-shadow:0 12px 60px rgba(0,0,0,.55);
+  cursor:default
+}
+.history-image-modal .history-image-close{
+  position:fixed;top:14px;right:18px;width:44px;height:44px;
+  border:1px solid rgba(131,220,230,.5);border-radius:12px;
+  color:#fff;background:#21182a;font-size:26px;cursor:pointer
+}
 
 .history-top{
   display:flex;
@@ -2813,9 +2853,23 @@ function renderHistory() {
     return;
   }
 
-  for (const entry of history) {
+  const paidEntries = history.filter(entry => entry.paymentReceived)
+    .slice()
+    .sort((a, b) => (Number(b.paymentReceivedAt) || Number(b.timestamp) || 0) - (Number(a.paymentReceivedAt) || Number(a.timestamp) || 0));
+  const recentPaidIds = new Set(paidEntries.slice(0, 3).map(entry => entry.id));
+  const sortedHistory = history.slice().sort((a, b) => {
+    if (Boolean(a.paymentReceived) !== Boolean(b.paymentReceived)) return a.paymentReceived ? 1 : -1;
+    if (a.paymentReceived && b.paymentReceived) {
+      const aTime = Number(a.paymentReceivedAt) || Number(a.timestamp) || 0;
+      const bTime = Number(b.paymentReceivedAt) || Number(b.timestamp) || 0;
+      return bTime - aTime;
+    }
+    return (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0);
+  });
+
+  for (const entry of sortedHistory) {
     const item = document.createElement("div");
-    item.className = "history-item";
+    item.className = "history-item" + (entry.paymentReceived ? (recentPaidIds.has(entry.id) ? " is-recent-paid" : "") : " is-unpaid");
 
     const total = document.createElement("div");
     total.className = "history-total";
@@ -2834,9 +2888,10 @@ function renderHistory() {
 
     paymentCheckbox.addEventListener("change", () => {
       entry.paymentReceived = paymentCheckbox.checked;
+      if (entry.paymentReceived) entry.paymentReceivedAt = Date.now();
+      else delete entry.paymentReceivedAt;
       saveHistory();
-      paymentLabel.classList.toggle("is-paid", entry.paymentReceived);
-      paymentText.textContent = entry.paymentReceived ? "✓ Деньги получены" : "Деньги ещё не получены";
+      renderHistory();
     });
 
     paymentLabel.appendChild(paymentCheckbox);
@@ -2851,6 +2906,9 @@ function renderHistory() {
       reportImage.src = entry.reportImage;
       reportImage.alt = "Отчёт о продаже: " + entry.sellerName;
       reportImage.loading = "lazy";
+      reportImage.classList.add("history-report-image");
+      reportImage.title = "Нажми, чтобы открыть изображение на весь экран";
+      reportImage.addEventListener("click", () => openHistoryImage(entry.reportImage, reportImage.alt));
       reportImage.style.display = "block";
       reportImage.style.width = "100%";
       reportImage.style.maxWidth = "620px";
@@ -2937,6 +2995,31 @@ function renderHistory() {
 
     list.appendChild(item);
   }
+}
+
+function openHistoryImage(src, alt) {
+  let modal = document.getElementById("historyImageModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "historyImageModal";
+    modal.className = "history-image-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = '<button type="button" class="history-image-close" aria-label="Закрыть">×</button><img alt="">';
+    modal.addEventListener("click", event => {
+      if (event.target === modal || event.target.classList.contains("history-image-close")) {
+        modal.classList.remove("is-open");
+      }
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") modal.classList.remove("is-open");
+    });
+    document.body.appendChild(modal);
+  }
+  const image = modal.querySelector("img");
+  image.src = src;
+  image.alt = alt || "Отчёт о продаже";
+  modal.classList.add("is-open");
 }
 
 function restoreSale(entry) {
